@@ -1,0 +1,195 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-background font-sans text-body text-ink antialiased;
+  /* Calm cream backdrop with a barely-there indigo wash. */
+  background-image:
+    radial-gradient(1100px 560px at 88% -8%, rgba(79, 70, 229, 0.05), transparent 62%),
+    radial-gradient(900px 520px at -5% 108%, rgba(64, 61, 57, 0.04), transparent 55%);
+  background-attachment: fixed;
+}
+
+/* Thin, calm scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #ccc5b9 transparent;
+}
+
+@layer components {
+  /* --- The four fixed type tiers (26/500 Heebo, 20/400, 16/400-or-300, 14/400
+     Assistant). Weight WITHIN a tier is the distinction tool (e.g. labels 400,
+     values 300; a name may be 600). --- */
+  .t-display {
+    @apply font-display text-display font-medium text-ink;
+  }
+  .t-subhead {
+    @apply font-sans text-subhead font-normal text-ink;
+  }
+  .t-body {
+    @apply font-sans text-body font-normal;
+  }
+  .t-detail {
+    @apply font-sans text-detail font-normal;
+  }
+
+  /* --- Buttons (consistent radius/height; action + publish are the signatures) --- */
+  .btn-base {
+    @apply focus-ring relative inline-flex select-none items-center justify-center gap-2 overflow-hidden rounded-xl font-sans font-medium transition-transform disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-base:not(:disabled):active {
+    transform: scale(0.96);
+  }
+
+  /* Action button (adamgiebl cssbuttons-io, adapted): graphite by default,
+     indigo wiped in on hover via a skewed overlay. */
+  .btn-action {
+    color: #fffcf2;
+    background: #4f46e5; /* indigo revealed underneath */
+  }
+  .btn-action::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -12%;
+    width: 124%;
+    height: 100%;
+    z-index: 0;
+    background: #403d39; /* graphite cover, visible by default */
+    transform: skew(-24deg);
+    transition: transform 0.85s cubic-bezier(0.3, 1, 0.8, 1);
+  }
+  .btn-action:not(:disabled):hover::before {
+    transform: skew(-24deg) translate3d(-135%, 0, 0);
+  }
+  .btn-action > * {
+    position: relative;
+    z-index: 10;
+  }
+
+  /* Publish button (Peary74, adapted): dark ink; on hover the arrow slides and
+     the label fades. */
+  .btn-publish {
+    background: #252422;
+    color: #fffcf2;
+    fill: #ccc5b9;
+    transition:
+      background 0.3s ease,
+      transform 0.1s ease;
+  }
+  .btn-publish:hover {
+    background: #000;
+  }
+  .btn-publish .btn-publish-label {
+    transition: opacity 0.4s linear;
+  }
+  .btn-publish .btn-publish-arrow {
+    display: inline-flex;
+    transition: transform 0.4s ease-in-out;
+    transform-origin: center;
+  }
+  .btn-publish:not(:disabled):hover .btn-publish-arrow {
+    transform: translateX(-1.4em) scale(1.15);
+    fill: #fff;
+  }
+  .btn-publish:not(:disabled):hover .btn-publish-label {
+    opacity: 0;
+  }
+
+  .btn-spinner {
+    @apply inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent;
+  }
+
+  /* Glassy card: blurry translucent panel with a faint indigo gradient rising
+     from the corner opposite the (RTL, top-right) text anchor. */
+  .glass {
+    @apply rounded-2xl border border-line/70 shadow-card backdrop-blur-xl;
+    background:
+      linear-gradient(135deg, rgba(79, 70, 229, 0.09), rgba(79, 70, 229, 0) 55%),
+      rgba(255, 253, 248, 0.66);
+  }
+
+  .glass-solid {
+    @apply rounded-2xl border border-line bg-panel-solid shadow-card;
+  }
+
+  /* Round notification bell (Uiverse vinodjangid07, adapted to the palette). */
+  .bell-button {
+    @apply relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-0 bg-ink shadow-card;
+    cursor: pointer;
+    transition:
+      background-color 0.3s,
+      transform 0.15s;
+  }
+  .bell-button:hover {
+    background-color: #403d39;
+  }
+  .bell-button:hover .bell-icon {
+    animation: bellRing 0.9s both;
+  }
+  .bell-button:active {
+    transform: scale(0.85);
+  }
+  @keyframes bellRing {
+    0%,
+    100% {
+      transform-origin: top;
+    }
+    15% {
+      transform: rotateZ(10deg);
+    }
+    30% {
+      transform: rotateZ(-10deg);
+    }
+    45% {
+      transform: rotateZ(5deg);
+    }
+    60% {
+      transform: rotateZ(-5deg);
+    }
+    75% {
+      transform: rotateZ(2deg);
+    }
+  }
+
+  @keyframes fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

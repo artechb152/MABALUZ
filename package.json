@@ -1,0 +1,52 @@
+{
+  "name": "mabaluz",
+  "productName": "Mabaluz",
+  "version": "0.1.0",
+  "description": "Mabaluz - Smart training schedule builder (Hebrew RTL desktop app)",
+  "private": true,
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "dev:web": "vite",
+    "build": "electron-vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.web.json && tsc --noEmit -p tsconfig.node.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "generate:sample-excel": "tsx scripts/generate-sample-excel.ts"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/modifiers": "^9.0.0",
+    "@fontsource/assistant": "^5.2.9",
+    "@fontsource/cherry-bomb-one": "^5.2.7",
+    "@fontsource/heebo": "^5.2.8",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
+    "framer-motion": "^12.42.2",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.18.1",
+    "xlsx": "^0.18.5",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.1.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.2.0",
+    "autoprefixer": "^10.5.2",
+    "electron": "^43.0.0",
+    "electron-vite": "^5.0.0",
+    "eslint": "^10.6.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "postcss": "^8.5.16",
+    "tailwindcss": "^3.4.19",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.63.0",
+    "vite": "^7.3.6",
+    "vitest": "^3.2.7"
+  }
+}
