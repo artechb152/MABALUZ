@@ -48,6 +48,7 @@ export type IconName =
   | 'users'
   | 'trash'
   | 'edit'
+  | 'prayers'
 
 const shapes: Record<IconName, ReactNode> = {
   dashboard: (
@@ -295,6 +296,12 @@ const shapes: Record<IconName, ReactNode> = {
   edit: (
     <>
       <path d="m15 5 4 4L8.5 19.5 4 20l.5-4.5Z" />
+    </>
+  ),
+  prayers: (
+    <>
+      <path d="M12 5.5C10 4 6.5 4 4.5 5.2v13C6.5 17 10 17 12 18.5c2-1.5 5.5-1.5 7.5-.3v-13C17.5 4 14 4 12 5.5Z" />
+      <path d="M12 5.5v13" />
     </>
   )
 }

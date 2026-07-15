@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import { clsx } from 'clsx'
 import { Icon, type IconName } from '@/assets/icons/Icon'
 import { Button } from '@/components/Button'
@@ -29,6 +30,7 @@ import {
 } from '@/lib/hebrewCopy'
 import { formatDateHe } from '@/lib/time'
 import { soldierCopy } from '@/features/schedule/copy'
+import artechLogo from '@/assets/images/artech-logo.svg'
 import type { UserRole } from '@/types'
 
 interface NavItem {
@@ -44,6 +46,7 @@ const COMMANDERS: UserRole[] = ['TRAINING_COMMANDER', 'SENIOR_COMMANDER', 'ADMIN
 const navItems: NavItem[] = [
   { to: '/dashboard', label: nav.dashboard, icon: 'dashboard', roles: ALL },
   { to: '/my-schedule', label: nav.mySchedule, icon: 'calendar', roles: ['SOLDIER'] },
+  { to: '/prayers', label: nav.prayers, icon: 'prayers', roles: ALL },
   {
     to: '/trainings',
     label: nav.myTrainings,
@@ -83,16 +86,12 @@ function NotificationsBell() {
         <span className="bell-icon flex text-background">
           <Icon name="notification" size={18} />
         </span>
-        {unread > 0 ? (
-          <span className="absolute -start-1 -top-1 flex h-5 min-w-5 animate-pulse items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-white">
-            {unread}
-          </span>
-        ) : null}
+        {unread > 0 ? <span className="notif-badge">{unread}</span> : null}
       </button>
       {open ? (
         <>
-          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute start-0 top-12 z-40 w-96 rounded-2xl border border-line bg-panel-solid shadow-pop">
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute end-0 top-12 z-50 w-96 max-w-[calc(100vw-2rem)] rounded-2xl border border-line bg-panel-solid shadow-pop">
             <div className="flex items-center justify-between border-b border-line px-4 py-3">
               <span className="t-body font-semibold text-ink">{dashboards.notifications}</span>
               {user && notifications.length > 0 ? (
@@ -143,7 +142,8 @@ function UserMenu() {
 
   return (
     <AnimatedMenu
-      width={230}
+      matchTriggerWidth
+      className="-me-[10px]"
       items={[
         {
           id: 'profile',
@@ -175,18 +175,23 @@ function UserMenu() {
         }
       ]}
       trigger={(open) => (
-        <span className="flex items-center gap-3 rounded-xl border border-line bg-panel-solid px-3.5 py-1.5 transition-colors hover:border-graphite/40 hover:bg-neutral-block/60">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft text-primary">
-            <Icon name={roleIcon(user.role)} size={22} />
+        <span
+          className={clsx(
+            'flex items-center gap-3 rounded-xl border border-line bg-panel-solid px-3.5 py-1.5 shadow-sm transition-colors',
+            open ? 'bg-neutral-block/70' : 'hover:bg-neutral-block/60'
+          )}
+        >
+          <span className="flex h-10 w-10 items-center justify-center text-ink-muted">
+            <Icon name={roleIcon(user.role)} size={26} />
           </span>
-          <span className="text-start leading-tight">
-            <span className="t-subhead block font-semibold text-graphite">{user.displayName}</span>
-            <span className="t-body block text-stone">{roleLabels[user.role]}</span>
+          <span className="min-w-0 flex-1 text-start leading-tight">
+            <span className="block truncate text-[18px] font-semibold text-ink">{user.displayName}</span>
+            <span className="block truncate text-[17px] text-ink-muted">{roleLabels[user.role]}</span>
           </span>
           <Icon
             name="chevron-down"
-            size={22}
-            className={clsx('text-graphite transition-transform duration-300', open && 'rotate-180')}
+            size={20}
+            className={clsx('shrink-0 text-ink transition-transform duration-300', open && 'rotate-180')}
           />
         </span>
       )}
@@ -194,23 +199,38 @@ function UserMenu() {
   )
 }
 
-/** Indigo pop-up under the "הלו״ז שלי" nav item — only when a note exists. */
+/** Indigo pop-up under the "הלו״ז שלי" nav item — pops in only while the
+    My-Schedule tab is active, and pops back off when the user navigates away. */
 function SidebarCommanderNote() {
+  const location = useLocation()
   const training = useMyTrainings()[0] ?? null
   const published = usePublishedSchedule(training)
-  if (!published?.commanderNote) return null
+  const active = location.pathname.startsWith('/my-schedule')
+  const note = published?.commanderNote
 
   return (
-    <div className="mx-1 mb-1 mt-1.5 animate-[fadeSlideIn_0.45s_ease]">
-      <div className="relative rounded-xl border border-primary/30 bg-primary-soft px-3 py-2.5 shadow-card">
-        <span className="absolute -top-1 end-6 h-2.5 w-2.5 rotate-45 border-s border-t border-primary/30 bg-primary-soft" />
-        <div className="flex items-center gap-1.5">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-          <span className="t-detail font-medium text-primary-hover">{soldierCopy.commanderNote}</span>
-        </div>
-        <p className="t-detail mt-1 leading-relaxed text-ink">{published.commanderNote}</p>
-      </div>
-    </div>
+    <AnimatePresence initial={false}>
+      {active && note ? (
+        <motion.div
+          initial={{ opacity: 0, height: 0, y: -8, scale: 0.94 }}
+          animate={{ opacity: 1, height: 'auto', y: 0, scale: 1 }}
+          exit={{ opacity: 0, height: 0, y: -8, scale: 0.94 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+          className="overflow-hidden"
+        >
+          <div className="mx-1 mb-1 mt-1.5">
+            <div className="relative rounded-xl border border-primary/30 bg-primary-soft px-3 py-2.5 shadow-card">
+              <span className="absolute -top-1 end-6 h-2.5 w-2.5 rotate-45 border-s border-t border-primary/30 bg-primary-soft" />
+              <div className="flex items-center gap-1.5">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
+                <span className="t-detail font-medium text-primary-hover">{soldierCopy.commanderNote}</span>
+              </div>
+              <p className="t-detail mt-1 leading-relaxed text-ink">{note}</p>
+            </div>
+          </div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   )
 }
 
@@ -230,10 +250,13 @@ export function AppShell() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Top navbar — full width, above the sidebar in hierarchy. */}
-      <header className="flex items-center justify-between gap-4 border-b border-line bg-panel px-6 py-2 backdrop-blur-md">
-        {/* Right (RTL start): the logo */}
-        <Wordmark size="md" />
+      {/* Top navbar — full width, above the sidebar in hierarchy. z-30 lets the
+          user/bell dropdowns overflow above the content column below. */}
+      <header className="relative z-30 flex items-center justify-between gap-4 border-b border-line bg-panel py-2 ps-4 pe-10 backdrop-blur-md">
+        {/* Right (RTL start): the logo, sized to sit over the sidebar column. */}
+        <div className="flex w-60 shrink-0 items-center ps-3">
+          <Wordmark size="nav" />
+        </div>
 
         {/* Middle — blank in production; temporary switch-user for free design. */}
         <div className="flex items-center gap-2">
@@ -280,7 +303,7 @@ export function AppShell() {
         </div>
 
         {/* Left (RTL end): bell + user menu */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-5 ps-3">
           <NotificationsBell />
           <UserMenu />
         </div>
@@ -313,13 +336,14 @@ export function AppShell() {
               </div>
             ))}
           </nav>
-          <div className="border-t border-line px-5 py-3">
-            <p className="t-detail leading-relaxed text-ink-muted">ARTECH — מערך ההדרכה</p>
+          <div className="flex flex-col items-start gap-1.5 border-t border-line px-5 py-4">
+            <img src={artechLogo} alt="ARTECH" className="h-6 w-auto" />
+            <p className="text-[11px] leading-relaxed text-ink-muted">מערך ההדרכה — בה״ד 15</p>
           </div>
         </aside>
 
-        {/* Content column: whiter than the navbar/sidebar for clear separation. */}
-        <div className="flex min-w-0 flex-1 flex-col bg-white">
+        {/* Content column: the cool grey canvas shows through so white cards pop. */}
+        <div className="flex min-w-0 flex-1 flex-col bg-transparent">
           {soldierPreview ? (
             <div className="t-detail border-b border-primary/20 bg-primary-soft px-6 py-1.5 text-center font-medium text-primary-hover">
               תצוגת חייל פעילה — מוצג לו״ז שפורסם בלבד.

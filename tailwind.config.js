@@ -4,19 +4,20 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // App shell: warm monochrome + one indigo accent.
-        background: '#FFFCF2', // paper / cream
-        panel: 'rgba(255,252,242,0.82)',
+        // App shell: cool light-grey monochrome + one indigo accent.
+        // (Replaces the old warm cream, which fought the indigo.)
+        background: '#EFF1F6', // cool light grey canvas, faint blue tilt
+        panel: 'rgba(255,255,255,0.75)', // frosted white chrome (navbar/sidebar)
         'panel-solid': '#FFFFFF',
         primary: {
           DEFAULT: '#4F46E5', // indigo accent
           soft: '#E9E7FC', // light indigo (allowed soft fill)
           hover: '#3F37C9'
         },
-        line: '#CCC5B9', // warm stone border
+        line: '#DCDFE7', // cool hairline border
         ink: {
-          DEFAULT: '#252422', // near-black
-          muted: '#403D39' // graphite
+          DEFAULT: '#22262F', // cool near-black
+          muted: '#474C57' // cool graphite
         },
         // Status = three rich colors, used as thin accents (border/text/icon).
         // The `-soft` tints are whisper-faint (6% alpha) so status callouts read
@@ -33,9 +34,9 @@ module.exports = {
           DEFAULT: '#0F766E',
           soft: 'rgba(15,118,110,0.07)'
         },
-        graphite: '#403D39',
-        stone: '#CCC5B9',
-        'neutral-block': '#F3F0E9'
+        graphite: '#474C57',
+        stone: '#C2C7D2',
+        'neutral-block': '#E6E9F0'
       },
       fontFamily: {
         // Four fixed tiers across the whole app.

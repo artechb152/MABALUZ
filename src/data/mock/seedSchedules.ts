@@ -55,7 +55,104 @@ function placeSpecial(events: ScheduleEvent[], special: ScheduleEvent): Schedule
   return kept
 }
 
-/** Regular training rhythm: formation, content blocks, meals, evening slot. */
+// A single block within a day template. `c(n)` slots pull rotating content
+// titles; fixed strings are meals/formation/team/commander blocks.
+interface BlockSpec {
+  title: string | { c: number }
+  type: ScheduleEvent['type']
+  flex: ScheduleEvent['flexibilityLevel']
+  start: string
+  end: string
+}
+
+const MEAL_NOON = 'ארוחת צהריים והפסקה'
+const MEAL_EVE = 'ארוחת ערב והפסקה'
+
+// Six deterministic weekday templates (rotated by day index) with varied start
+// times and durations — 15m formations, 30/45m short items, 1.5–3h long ones —
+// so the grid reads like a real, uneven schedule. All within 08:00–20:00.
+const WEEKDAY_TEMPLATES: BlockSpec[][] = [
+  [
+    { title: { c: 0 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '08:15', end: '09:00' },
+    { title: { c: 1 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '09:15', end: '11:15' },
+    { title: { c: 2 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '11:15', end: '11:45' },
+    { title: MEAL_NOON, type: 'MEAL_BREAK', flex: 'SEMI_FLEXIBLE', start: '12:30', end: '13:15' },
+    { title: { c: 3 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '13:15', end: '14:45' },
+    { title: { c: 4 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '15:00', end: '15:45' },
+    { title: 'פעילות צוותית', type: 'TEAM_ACTIVITY', flex: 'FLEXIBLE', start: '16:00', end: '18:00' },
+    { title: MEAL_EVE, type: 'MEAL_BREAK', flex: 'SEMI_FLEXIBLE', start: '18:30', end: '19:15' },
+    { title: 'זמן מפקד', type: 'COMMANDER_TIME', flex: 'SEMI_FLEXIBLE', start: '19:30', end: '20:00' }
+  ],
+  [
+    { title: { c: 0 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '08:15', end: '10:45' },
+    { title: { c: 1 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '11:00', end: '11:30' },
+    { title: { c: 2 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '11:45', end: '12:30' },
+    { title: MEAL_NOON, type: 'MEAL_BREAK', flex: 'SEMI_FLEXIBLE', start: '12:45', end: '13:45' },
+    { title: { c: 3 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '13:45', end: '16:45' },
+    { title: { c: 4 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '17:00', end: '17:30' },
+    { title: MEAL_EVE, type: 'MEAL_BREAK', flex: 'SEMI_FLEXIBLE', start: '18:00', end: '18:45' },
+    { title: 'פעילות צוותית', type: 'TEAM_ACTIVITY', flex: 'FLEXIBLE', start: '19:00', end: '20:00' }
+  ],
+  [
+    { title: { c: 0 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '08:15', end: '08:45' },
+    { title: { c: 1 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '08:45', end: '09:30' },
+    { title: { c: 2 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '09:45', end: '10:30' },
+    { title: { c: 3 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '10:45', end: '12:15' },
+    { title: MEAL_NOON, type: 'MEAL_BREAK', flex: 'SEMI_FLEXIBLE', start: '12:15', end: '13:00' },
+    { title: { c: 4 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '13:00', end: '15:00' },
+    { title: 'פעילות צוותית', type: 'TEAM_ACTIVITY', flex: 'FLEXIBLE', start: '15:15', end: '16:00' },
+    { title: { c: 0 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '16:00', end: '17:30' },
+    { title: MEAL_EVE, type: 'MEAL_BREAK', flex: 'SEMI_FLEXIBLE', start: '18:15', end: '19:00' },
+    { title: 'זמן מפקד', type: 'COMMANDER_TIME', flex: 'SEMI_FLEXIBLE', start: '19:15', end: '20:00' }
+  ],
+  [
+    { title: { c: 0 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '08:30', end: '10:00' },
+    { title: { c: 1 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '10:15', end: '11:00' },
+    { title: { c: 2 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '11:00', end: '12:00' },
+    { title: MEAL_NOON, type: 'MEAL_BREAK', flex: 'SEMI_FLEXIBLE', start: '13:00', end: '14:00' },
+    { title: { c: 3 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '14:00', end: '15:30' },
+    { title: { c: 4 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '15:45', end: '16:30' },
+    { title: 'פעילות צוותית', type: 'TEAM_ACTIVITY', flex: 'FLEXIBLE', start: '16:45', end: '18:15' },
+    { title: MEAL_EVE, type: 'MEAL_BREAK', flex: 'SEMI_FLEXIBLE', start: '18:30', end: '19:15' },
+    { title: 'זמן מפקד', type: 'COMMANDER_TIME', flex: 'SEMI_FLEXIBLE', start: '19:15', end: '20:00' }
+  ],
+  [
+    { title: { c: 0 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '08:15', end: '09:45' },
+    { title: { c: 1 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '09:45', end: '10:15' },
+    { title: { c: 2 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '10:30', end: '12:30' },
+    { title: MEAL_NOON, type: 'MEAL_BREAK', flex: 'SEMI_FLEXIBLE', start: '12:30', end: '13:15' },
+    { title: { c: 3 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '13:30', end: '14:15' },
+    { title: { c: 4 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '14:15', end: '15:00' },
+    { title: { c: 0 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '15:15', end: '17:45' },
+    { title: MEAL_EVE, type: 'MEAL_BREAK', flex: 'SEMI_FLEXIBLE', start: '18:15', end: '19:00' },
+    { title: 'פעילות צוותית', type: 'TEAM_ACTIVITY', flex: 'FLEXIBLE', start: '19:15', end: '20:00' }
+  ],
+  [
+    { title: { c: 0 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '08:15', end: '09:00' },
+    { title: { c: 1 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '09:15', end: '12:15' },
+    { title: MEAL_NOON, type: 'MEAL_BREAK', flex: 'SEMI_FLEXIBLE', start: '12:30', end: '13:30' },
+    { title: { c: 2 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '13:30', end: '14:15' },
+    { title: { c: 3 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '14:30', end: '15:00' },
+    { title: { c: 4 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '15:00', end: '17:00' },
+    { title: 'פעילות צוותית', type: 'TEAM_ACTIVITY', flex: 'FLEXIBLE', start: '17:15', end: '18:15' },
+    { title: MEAL_EVE, type: 'MEAL_BREAK', flex: 'SEMI_FLEXIBLE', start: '18:30', end: '19:15' },
+    { title: 'זמן מפקד', type: 'COMMANDER_TIME', flex: 'SEMI_FLEXIBLE', start: '19:30', end: '20:00' }
+  ]
+]
+
+const FRIDAY_TEMPLATES: BlockSpec[][] = [
+  [
+    { title: { c: 0 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '08:15', end: '10:45' },
+    { title: 'סיכום שבוע ופעילות צוותית', type: 'TEAM_ACTIVITY', flex: 'FLEXIBLE', start: '11:00', end: '13:00' }
+  ],
+  [
+    { title: { c: 0 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '08:15', end: '09:00' },
+    { title: { c: 1 }, type: 'FLEXIBLE_CONTENT', flex: 'FLEXIBLE', start: '09:15', end: '11:15' },
+    { title: 'סיכום שבוע ופעילות צוותית', type: 'TEAM_ACTIVITY', flex: 'FLEXIBLE', start: '11:30', end: '13:00' }
+  ]
+]
+
+/** Regular training rhythm: a 15-minute formation plus a varied day template. */
 function buildBaseWeekEvents(
   trainingId: string,
   startDate: string,
@@ -71,6 +168,7 @@ function buildBaseWeekEvents(
     if (dow === 6) continue // Saturday disabled by default settings
 
     const title = (offset: number) => contentTitles[(i + offset) % contentTitles.length]
+    const resolve = (t: BlockSpec['title']) => (typeof t === 'string' ? t : title(t.c))
 
     events.push(
       makeEvent({
@@ -84,118 +182,24 @@ function buildBaseWeekEvents(
       })
     )
 
-    if (dow === 5) {
-      // Friday: short day (08:00-14:00)
+    const template =
+      dow === 5
+        ? FRIDAY_TEMPLATES[i % FRIDAY_TEMPLATES.length]
+        : WEEKDAY_TEMPLATES[i % WEEKDAY_TEMPLATES.length]
+
+    for (const b of template) {
       events.push(
         makeEvent({
           trainingId,
-          title: title(0),
-          type: 'FLEXIBLE_CONTENT',
-          flexibilityLevel: 'FLEXIBLE',
+          title: resolve(b.title),
+          type: b.type,
+          flexibilityLevel: b.flex,
           date,
-          startTime: '08:15',
-          endTime: '11:00'
-        }),
-        makeEvent({
-          trainingId,
-          title: 'סיכום שבוע ופעילות צוותית',
-          type: 'TEAM_ACTIVITY',
-          flexibilityLevel: 'FLEXIBLE',
-          date,
-          startTime: '11:00',
-          endTime: '13:00'
+          startTime: b.start,
+          endTime: b.end
         })
       )
-      continue
     }
-
-    // Sunday-Thursday
-    events.push(
-      makeEvent({
-        trainingId,
-        title: title(0),
-        type: 'FLEXIBLE_CONTENT',
-        flexibilityLevel: 'FLEXIBLE',
-        date,
-        startTime: '08:15',
-        endTime: '10:00'
-      }),
-      makeEvent({
-        trainingId,
-        title: title(1),
-        type: 'FLEXIBLE_CONTENT',
-        flexibilityLevel: 'FLEXIBLE',
-        date,
-        startTime: '10:15',
-        endTime: '12:00'
-      }),
-      makeEvent({
-        trainingId,
-        title: 'ארוחת צהריים והפסקה',
-        type: 'MEAL_BREAK',
-        flexibilityLevel: 'SEMI_FLEXIBLE',
-        date,
-        startTime: '12:00',
-        endTime: '13:00'
-      }),
-      makeEvent({
-        trainingId,
-        title: title(2),
-        type: 'FLEXIBLE_CONTENT',
-        flexibilityLevel: 'FLEXIBLE',
-        date,
-        startTime: '13:00',
-        endTime: '15:00'
-      }),
-      makeEvent({
-        trainingId,
-        title: title(3),
-        type: 'FLEXIBLE_CONTENT',
-        flexibilityLevel: 'FLEXIBLE',
-        date,
-        startTime: '15:15',
-        endTime: '17:00'
-      }),
-      makeEvent({
-        trainingId,
-        title: title(4),
-        type: 'FLEXIBLE_CONTENT',
-        flexibilityLevel: 'FLEXIBLE',
-        date,
-        startTime: '17:00',
-        endTime: '18:00'
-      }),
-      makeEvent({
-        trainingId,
-        title: 'ארוחת ערב והפסקה',
-        type: 'MEAL_BREAK',
-        flexibilityLevel: 'SEMI_FLEXIBLE',
-        date,
-        startTime: '18:00',
-        endTime: '19:00'
-      }),
-      makeEvent(
-        dow === 0 || dow === 3
-          ? {
-              trainingId,
-              title: 'זמן מפקד',
-              type: 'COMMANDER_TIME',
-              flexibilityLevel: 'SEMI_FLEXIBLE',
-              date,
-              startTime: '19:00',
-              endTime: '20:00'
-            }
-          : {
-              trainingId,
-              title: 'פעילות צוותית',
-              type: 'TEAM_ACTIVITY',
-              flexibilityLevel: 'FLEXIBLE',
-              date,
-              startTime: '19:00',
-              endTime: '20:00'
-            }
-      )
-    )
   }
   return events
 }

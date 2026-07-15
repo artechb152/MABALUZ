@@ -19,7 +19,7 @@ import { useDb } from '@/app/dbStore'
 import { addDaysISO, timeRangesOverlap, todayISO, weekStartISO, toMinutes, toHHMM } from '@/lib/time'
 import { detectConflicts, buildImpactReport } from '@/features/scheduling-engine'
 import { discardDraft, moveDraftEvent, setDayLock, swapDraftEvents } from '@/data/services/scheduleService'
-import { WeekGrid } from './WeekGrid'
+import { ScheduleLegend, WeekGrid } from './WeekGrid'
 import { EventEditorModal } from './EventEditorModal'
 import { PublishFlow } from './PublishFlow'
 import { GenerateFlow } from './GenerateFlow'
@@ -185,25 +185,25 @@ export function ScheduleBuilderPage() {
       {/* Toolbar */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
+            type="button"
+            className="week-nav-btn"
             onClick={() => setWeekStart(addDaysISO(weekStart, -7))}
             aria-label="שבוע קודם"
           >
             <Icon name="chevron-right" size={16} />
-          </Button>
+          </button>
           <Button variant="ghost" size="sm" onClick={() => setWeekStart(weekStartISO(todayISO()))}>
             {buttons.today}
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
+            type="button"
+            className="week-nav-btn"
             onClick={() => setWeekStart(addDaysISO(weekStart, 7))}
             aria-label="שבוע הבא"
           >
             <Icon name="chevron-left" size={16} />
-          </Button>
+          </button>
           <Tabs
             items={[
               { key: 'draft', label: statusLabels.draft },
@@ -264,6 +264,12 @@ export function ScheduleBuilderPage() {
       {!editable ? (
         <div className="mb-4 rounded-xl bg-primary-soft px-4 py-2.5 text-sm text-primary-hover">
           {builderCopy.publishedView}
+        </div>
+      ) : null}
+
+      {schedule && schedule.events.length > 0 ? (
+        <div className="mb-2 flex justify-end">
+          <ScheduleLegend events={schedule.events} />
         </div>
       ) : null}
 

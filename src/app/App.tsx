@@ -25,6 +25,7 @@ import { ContactPage } from '@/features/faq/ContactPage'
 import { SettingsPage } from '@/features/settings/SettingsPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { UserSettingsPage } from '@/features/profile/UserSettingsPage'
+import { PrayersPage } from '@/features/prayers/PrayersPage'
 
 function RequireUser({ children }: { children: ReactNode }) {
   const currentUser = useSession((s) => s.currentUser)
@@ -58,6 +59,7 @@ export function App() {
         >
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/my-schedule" element={<SoldierSchedulePage />} />
+          <Route path="/prayers" element={<PrayersPage />} />
           <Route path="/trainings" element={<TrainingListPage />} />
           <Route path="/trainings/new" element={<CreateTrainingWizard />} />
           <Route path="/schedule" element={<ScheduleBuilderPage />} />

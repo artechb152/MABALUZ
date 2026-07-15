@@ -7,34 +7,70 @@
 // Status meaning (danger/warning/success) reuses three of the rich colors, but
 // only as thin borders / icons / text — never as filled panels.
 export const theme = {
-  background: '#FFFCF2', // paper / cream
-  panel: 'rgba(255,252,242,0.82)',
+  background: '#EFF1F6', // cool light grey canvas
+  panel: 'rgba(255,255,255,0.75)',
   panelSolid: '#FFFFFF',
   primary: '#4F46E5', // indigo accent
   primarySoft: '#E9E7FC', // light indigo
   primaryHover: '#3F37C9',
-  border: '#CCC5B9', // warm stone
-  text: '#252422', // near-black ink
-  mutedText: '#403D39', // graphite
+  border: '#DCDFE7', // cool hairline
+  text: '#22262F', // cool near-black ink
+  mutedText: '#474C57', // cool graphite
   danger: '#C81D4B', // crimson (thin-accent only)
   warning: '#CC4800', // burnt orange (thin-accent only)
   success: '#0F766E', // teal (thin-accent only)
-  neutralBlock: '#F3F0E9' // faint stone tint
+  neutralBlock: '#E6E9F0' // faint cool tint
 } as const
 
-// The five rich schedule-block colors. Nothing outside a calendar block should
-// use these as a fill.
-export const blockPalette = ['#C81D4B', '#CC4800', '#0F766E', '#185FA5', '#7209B7'] as const
+// Schedule-block palette: bright, flat, saturated. Nothing outside a calendar
+// block (or a prayer panel) should use these as a fill. Flat fills only — no
+// gradients. The five seed colors are extended with same-vibe neighbours.
+export const blockPalette = [
+  '#ffbe0b', // amber
+  '#fb5607', // orange
+  '#ff006e', // magenta
+  '#8338ec', // purple
+  '#3a86ff', // blue
+  '#06d6a0', // mint
+  '#f15bb5', // pink
+  '#00bbf9', // sky
+  '#9b5de5' // violet
+] as const
 
 // Default block color per event type (commander may override from blockPalette).
 export const eventTypeColors: Record<string, string> = {
-  SHARED: '#7209B7', // purple
-  PEAK_DAY: '#CC4800', // orange
-  GUEST_LECTURE: '#C81D4B', // crimson
-  FLEXIBLE_CONTENT: '#185FA5', // blue
-  MEAL_BREAK: '#0F766E', // teal
-  COMMANDER_TIME: '#7209B7', // purple
-  FORMATION: '#CC4800', // orange
-  TEAM_ACTIVITY: '#C81D4B', // crimson
-  CUSTOM: '#185FA5' // blue
+  SHARED: '#8338ec', // purple
+  PEAK_DAY: '#fb5607', // orange
+  GUEST_LECTURE: '#ff006e', // magenta
+  FLEXIBLE_CONTENT: '#3a86ff', // blue
+  MEAL_BREAK: '#06d6a0', // mint
+  COMMANDER_TIME: '#9b5de5', // violet
+  FORMATION: '#ffbe0b', // amber
+  TEAM_ACTIVITY: '#f15bb5', // pink
+  CUSTOM: '#00bbf9' // sky
+}
+
+/** Relative luminance (WCAG) of a hex color. */
+function luminance(hex: string): number {
+  const n = parseInt(hex.replace('#', ''), 16)
+  const chan = (c: number) => {
+    const s = c / 255
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4
+  }
+  return (
+    0.2126 * chan((n >> 16) & 255) + 0.7152 * chan((n >> 8) & 255) + 0.0722 * chan(n & 255)
+  )
+}
+
+/**
+ * Readable text color on a block fill. Bright colors (amber, mint, sky) take
+ * ink; the rest take white. We never darken the fill to make white work.
+ */
+export function blockTextColor(hex: string): string {
+  return luminance(hex) > 0.35 ? theme.text : '#FFFFFF'
+}
+
+/** Texture color (dots / slanted lines) that reads on a given block fill. */
+export function blockTextureColor(hex: string): string {
+  return luminance(hex) > 0.35 ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.32)'
 }

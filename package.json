@@ -21,6 +21,7 @@
     "@fontsource/assistant": "^5.2.9",
     "@fontsource/cherry-bomb-one": "^5.2.7",
     "@fontsource/heebo": "^5.2.8",
+    "@hebcal/core": "^6.6.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "framer-motion": "^12.42.2",

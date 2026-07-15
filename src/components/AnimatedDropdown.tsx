@@ -134,21 +134,33 @@ interface AnimatedMenuProps {
   /** Custom trigger; receives open state (e.g. to rotate its own chevron). */
   trigger: (open: boolean) => ReactNode
   items: MenuItem[]
-  /** Menu width in px (defaults to 230). */
+  /** Menu width in px (defaults to 230). Ignored when matchTriggerWidth is set. */
   width?: number
+  /** Make the menu exactly as wide as its trigger. */
+  matchTriggerWidth?: boolean
   className?: string
 }
 
 /** Menu-style dropdown with a custom trigger (used for the navbar user chip). */
-export function AnimatedMenu({ trigger, items, width = 230, className }: AnimatedMenuProps) {
+export function AnimatedMenu({ trigger, items, width = 230, matchTriggerWidth, className }: AnimatedMenuProps) {
   const [open, setOpen] = useState(false)
+  const [triggerWidth, setTriggerWidth] = useState<number | null>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const ref = useOutsideClose(() => setOpen(false))
+
+  function toggle() {
+    if (matchTriggerWidth && triggerRef.current) {
+      setTriggerWidth(triggerRef.current.offsetWidth)
+    }
+    setOpen((v) => !v)
+  }
 
   return (
     <div ref={ref} className={clsx('relative', className)}>
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggle}
         aria-haspopup="menu"
         aria-expanded={open}
         className="focus-ring block rounded-xl"
@@ -161,8 +173,8 @@ export function AnimatedMenu({ trigger, items, width = 230, className }: Animate
           <motion.div
             {...menuMotion}
             role="menu"
-            style={{ width }}
-            className="absolute start-0 top-full z-50 mt-2 overflow-hidden rounded-xl border-2 border-ink bg-panel-solid shadow-pop"
+            style={{ width: matchTriggerWidth ? (triggerWidth ?? width) : width }}
+            className="absolute start-0 top-full z-[60] mt-2 overflow-hidden rounded-xl border border-line bg-panel-solid shadow-pop"
           >
             {items.map((item, index) => (
               <motion.button

@@ -7,6 +7,7 @@ export const dashCopy = {
   },
   fullScheduleShort: 'ללו״ז המלא',
   todayInSchedule: 'היום בלו״ז',
+  rightNow: 'עכשיו',
   nothingToday: 'אין רכיבים להיום.',
   draftDiverged: 'קיימים שינויים שטרם פורסמו',
   draftSynced: 'הטיוטה זהה ללו״ז שפורסם',

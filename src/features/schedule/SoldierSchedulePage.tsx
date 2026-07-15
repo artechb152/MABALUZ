@@ -1,8 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import type { ScheduleEvent } from '@/types'
 import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
-import { Button } from '@/components/Button'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
 import { Toggle } from '@/components/Toggle'
@@ -11,7 +10,7 @@ import { eventTypeLabels, generic, nav } from '@/lib/hebrewCopy'
 import { useMyTrainings, usePublishedSchedule } from '@/app/hooks'
 import { useDb } from '@/app/dbStore'
 import { addDaysISO, formatDateHe, todayISO, weekStartISO } from '@/lib/time'
-import { WeekGrid } from './WeekGrid'
+import { ScheduleLegend, WeekGrid } from './WeekGrid'
 import { soldierCopy } from './copy'
 
 export function SoldierSchedulePage() {
@@ -58,34 +57,52 @@ export function SoldierSchedulePage() {
 
   return (
     <div>
-      {/* Commander note now lives as a pop-up under the sidebar's הלו״ז שלי item. */}
-      <PageHeader title={nav.mySchedule} subtitle={training.name} />
+      {/* Commander note lives as a pop-up under the sidebar's הלו״ז שלי item. */}
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          {/* Title: "הלו״ז שלי - <training>" — same size, training name lighter. */}
+          <h1 className="t-display">
+            {nav.mySchedule}
+            <span className="font-light text-ink-muted"> - {training.name}</span>
+          </h1>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="week-nav-btn"
+                disabled={atMinWeek}
+                onClick={() => setWeekStart(addDaysISO(weekStart, -7))}
+                aria-label="שבוע קודם"
+              >
+                <Icon name="chevron-right" size={16} />
+              </button>
+              <span className="tnum min-w-[150px] text-center text-[18px] font-normal text-ink-muted">
+                {generic.week}: {formatDateHe(weekStart)}
+              </span>
+              <button
+                type="button"
+                className="week-nav-btn"
+                disabled={atMaxWeek}
+                onClick={() => setWeekStart(addDaysISO(weekStart, 7))}
+                aria-label="שבוע הבא"
+              >
+                <Icon name="chevron-left" size={16} />
+              </button>
+            </div>
+            {!canSeeNextWeek ? (
+              <span className="t-detail text-ink-muted">{soldierCopy.nextWeekBlocked}</span>
+            ) : null}
+          </div>
+        </div>
 
-      <div className="mb-3 flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={atMinWeek}
-          onClick={() => setWeekStart(addDaysISO(weekStart, -7))}
-          aria-label="שבוע קודם"
-        >
-          <Icon name="chevron-right" size={16} />
-        </Button>
-        <span className="tnum t-body font-light text-ink-muted">
-          {generic.week}: {formatDateHe(weekStart)}
-        </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={atMaxWeek}
-          onClick={() => setWeekStart(addDaysISO(weekStart, 7))}
-          aria-label="שבוע הבא"
-        >
-          <Icon name="chevron-left" size={16} />
-        </Button>
-        {!canSeeNextWeek ? (
-          <span className="t-detail text-ink-muted">{soldierCopy.nextWeekBlocked}</span>
-        ) : null}
+        {/* Colour guide in its own card, textured with thick slanted lines across
+            the whole field (no fade). */}
+        <div className="relative overflow-hidden rounded-2xl border border-line bg-panel-solid p-4 shadow-card">
+          <span className="tex-lines" style={{ '--tex-fg': 'rgba(79,70,229,0.14)' } as CSSProperties} />
+          <div className="relative z-10">
+            <ScheduleLegend events={visibleEvents} />
+          </div>
+        </div>
       </div>
 
       {published ? (

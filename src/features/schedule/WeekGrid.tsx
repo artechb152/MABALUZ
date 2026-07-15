@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
   DndContext,
   PointerSensor,
@@ -16,6 +16,7 @@ import type { ScheduleEvent, TrainingSettings } from '@/types'
 import { addDaysISO, toHHMM, toMinutes, todayISO } from '@/lib/time'
 import { eventTypeColors } from '@/lib/theme'
 import { dayNames, eventTypeLabels, warnings } from '@/lib/hebrewCopy'
+import { hebDayInfo, hebrewDateShort } from '@/lib/hebcalendar'
 import { Icon } from '@/assets/icons/Icon'
 import { useNow } from '@/app/useNow'
 import { PX_PER_HOUR, daySpecFor, gridRange, snapMinutes } from './gridUtils'
@@ -36,9 +37,7 @@ export interface WeekGridProps {
   onToggleDayLock?: (date: string, locked: boolean) => void
   /** Soldier view: hide hard/lock/visibility indicators (not relevant to them). */
   hideHardIndicators?: boolean
-  /** Scale rows so the whole week fits the viewport without scrolling (default on). */
-  fitToScreen?: boolean
-  /** Larger type for projection mode. */
+  /** Larger type + auto-fit to viewport for projection mode. */
   display?: boolean
 }
 
@@ -51,12 +50,42 @@ interface DayInfo {
   locked: boolean
 }
 
-const GUTTER = '64px'
-const FIT_RESERVE = 84 // legend + card chrome below the grid body
+const GUTTER = '74px'
+const MIN_HOUR_PX = 72 // floor, so an hour always has room to breathe
+const MAX_HOUR_PX = 120
+const MIN_BLOCK_H = 22 // small floor so even a 15-min title fits, uncut
+const SCROLL_RESERVE = 18
 
 /** Only flexible, non-locked, non-full-day blocks can move or be swapped. */
 function isSwappable(e: ScheduleEvent): boolean {
   return !e.isLocked && !e.isFullDay
+}
+
+/** Mix a hex color toward black by `amt` (0..1) — used only for the thin rim. */
+function shade(hex: string, amt: number): string {
+  const n = parseInt(hex.replace('#', ''), 16)
+  const f = 1 - amt
+  return `rgb(${Math.round(((n >> 16) & 255) * f)}, ${Math.round(((n >> 8) & 255) * f)}, ${Math.round((n & 255) * f)})`
+}
+
+/** Present event types across the given events — drives the standalone legend. */
+export function ScheduleLegend({ events, className }: { events: ScheduleEvent[]; className?: string }) {
+  const types = useMemo(() => {
+    const present = new Set<ScheduleEvent['type']>()
+    for (const e of events) present.add(e.type)
+    return [...present]
+  }, [events])
+  if (types.length === 0) return null
+  return (
+    <div className={clsx('flex flex-wrap items-center gap-x-4 gap-y-2', className)}>
+      {types.map((t) => (
+        <span key={t} className="flex items-center gap-2 text-[15px] text-ink">
+          <span className="h-3.5 w-3.5 shrink-0 rounded-full shadow-sm" style={{ backgroundColor: eventTypeColors[t] }} />
+          {eventTypeLabels[t]}
+        </span>
+      ))}
+    </div>
+  )
 }
 
 export function WeekGrid(props: WeekGridProps) {
@@ -69,24 +98,24 @@ export function WeekGrid(props: WeekGridProps) {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
 
-  // Fit the full day range into the available viewport height.
-  const bodyRef = useRef<HTMLDivElement>(null)
+  // One hour = one row. We fit the viewport where we can, but never below the
+  // floor — blocks must stay tall enough for their title to breathe.
+  const scrollRef = useRef<HTMLDivElement>(null)
   const [pxPerHour, setPxPerHour] = useState(PX_PER_HOUR)
-  const fit = props.fitToScreen !== false
+  const [scrollMax, setScrollMax] = useState<number | undefined>(undefined)
   useEffect(() => {
-    if (!fit) return
     function measure() {
-      const el = bodyRef.current
+      const el = scrollRef.current
       if (!el) return
-      const available = window.innerHeight - el.getBoundingClientRect().top - FIT_RESERVE
-      setPxPerHour(Math.min(96, Math.max(36, Math.floor(available / hoursCount))))
+      const top = el.getBoundingClientRect().top
+      const available = window.innerHeight - top - SCROLL_RESERVE
+      setPxPerHour(Math.min(MAX_HOUR_PX, Math.max(MIN_HOUR_PX, Math.floor(available / hoursCount))))
+      setScrollMax(props.display ? undefined : Math.max(320, available))
     }
     measure()
     window.addEventListener('resize', measure)
     return () => window.removeEventListener('resize', measure)
-  }, [fit, hoursCount])
-
-  const totalHeight = hoursCount * pxPerHour
+  }, [props.display, hoursCount])
 
   const days: DayInfo[] = useMemo(
     () =>
@@ -114,14 +143,39 @@ export function WeekGrid(props: WeekGridProps) {
 
   const eventById = useMemo(() => new Map(props.events.map((e) => [e.id, e])), [props.events])
 
-  const hours: number[] = []
-  for (let m = gridStart; m <= gridEnd; m += 60) hours.push(m)
+  // Blocks sit at their true time, but never shrink below the readable minimum.
+  // Where a minimum would collide with the block above, the block is pushed down
+  // instead of overlapping; sparse stretches snap back to the axis.
+  const { placements, canvasHeight } = useMemo(() => {
+    const byDate = new Map<string, { event: ScheduleEvent; day: DayInfo }[]>()
+    for (const we of weekEvents) {
+      const arr = byDate.get(we.day.date) ?? []
+      arr.push(we)
+      byDate.set(we.day.date, arr)
+    }
+    const place = new Map<string, { top: number; height: number }>()
+    let maxBottom = 0
+    for (const arr of byDate.values()) {
+      for (const { event, day } of arr) {
+        const sMin = event.isFullDay ? day.startMinutes : toMinutes(event.startTime)
+        const eMin = event.isFullDay ? day.endMinutes : toMinutes(event.endTime)
+        // Exact proportional height and position — no push-down. Blocks touch (or
+        // overlap) exactly as the commander's times dictate.
+        const height = Math.max(MIN_BLOCK_H, ((eMin - sMin) / 60) * pxPerHour)
+        const top = ((sMin - gridStart) / 60) * pxPerHour
+        place.set(event.id, { top, height })
+        if (top + height > maxBottom) maxBottom = top + height
+      }
+    }
+    return { placements: place, canvasHeight: Math.max(hoursCount * pxPerHour, maxBottom + 8) }
+  }, [weekEvents, pxPerHour, gridStart, hoursCount])
 
-  const typesInWeek = useMemo(() => {
-    const present = new Set<ScheduleEvent['type']>()
-    for (const { event } of weekEvents) present.add(event.type)
-    return [...present]
-  }, [weekEvents])
+  // Axis marks every half hour: on-the-hour reads strong, the half reads light.
+  const marks = useMemo(() => {
+    const out: number[] = []
+    for (let m = gridStart; m <= gridEnd; m += 30) out.push(m)
+    return out
+  }, [gridStart, gridEnd])
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
   const dndEnabled = !!props.editable && (!!props.onEventDrop || !!props.onEventSwap)
@@ -129,11 +183,9 @@ export function WeekGrid(props: WeekGridProps) {
   function handleDragStart(e: DragStartEvent) {
     setActiveId(String(e.active.id))
   }
-
   function handleDragOver(e: DragOverEvent) {
     setOverId(e.over ? String(e.over.id) : null)
   }
-
   function handleDragEnd(dragEvent: DragEndEvent) {
     const { active, over, delta } = dragEvent
     setActiveId(null)
@@ -143,14 +195,12 @@ export function WeekGrid(props: WeekGridProps) {
     if (!event || !isSwappable(event)) return
     const overKey = String(over.id)
 
-    // Dropped directly on another block -> swap (if that block is swappable too).
     const targetEvent = eventById.get(overKey)
     if (targetEvent && targetEvent.id !== event.id) {
       if (isSwappable(targetEvent)) props.onEventSwap?.(event.id, targetEvent.id)
       return
     }
 
-    // Dropped on a day column -> relocate, or swap with whatever occupies the slot.
     const targetDay = days.find((d) => d.date === overKey)
     if (!targetDay || !targetDay.enabled || targetDay.locked) return
 
@@ -168,7 +218,6 @@ export function WeekGrid(props: WeekGridProps) {
         toMinutes(o.startTime) < newEnd
     )?.event
     if (occupant) {
-      // No resting on top of others: swap with the occupant if allowed, else no-op.
       if (isSwappable(occupant) && props.onEventSwap) props.onEventSwap(event.id, occupant.id)
       return
     }
@@ -179,139 +228,128 @@ export function WeekGrid(props: WeekGridProps) {
   const nowVisible = !!todayInfo && nowMinutes >= gridStart && nowMinutes <= gridEnd
 
   const grid = (
-    <div className="glass-solid overflow-x-auto p-0">
-      <div className="min-w-[960px]">
-        {/* Header row */}
-        <div className="grid border-b-2 border-line" style={{ gridTemplateColumns: `${GUTTER} repeat(7, 1fr)` }}>
-          <div />
-          {days.map((d) => (
-            <div
-              key={d.date}
-              className={clsx(
-                'flex items-center justify-between gap-1 border-s-2 border-line px-2.5 py-2',
-                d.date === today && 'bg-primary-soft'
-              )}
-            >
-              <div className="min-w-0">
-                <div className={clsx('truncate font-semibold text-ink', props.display ? 'text-subhead' : 'text-body')}>
-                  {dayNames[d.dow]}
-                </div>
-                <div className="tnum t-body font-light text-ink-muted">{format(parseISO(d.date), 'dd/MM')}</div>
-              </div>
-              {props.onToggleDayLock && props.editable ? (
-                <button
-                  type="button"
-                  title={d.locked ? warnings.lockedDay : undefined}
-                  aria-label={d.locked ? 'פתח נעילה' : 'נעל יום'}
-                  onClick={() => props.onToggleDayLock?.(d.date, !d.locked)}
-                  className={clsx(
-                    'focus-ring rounded-lg p-1',
-                    d.locked ? 'text-warning' : 'text-ink-muted/40 hover:text-ink-muted'
-                  )}
-                >
-                  <Icon name={d.locked ? 'lock' : 'unlock'} size={14} />
-                </button>
-              ) : d.locked && !props.hideHardIndicators ? (
-                <span title={warnings.lockedDay} className="text-warning">
-                  <Icon name="lock" size={14} />
-                </span>
-              ) : null}
-            </div>
-          ))}
-        </div>
-
-        {/* Body: gutter + one shared canvas for all seven days */}
-        <div ref={bodyRef} className="grid" style={{ gridTemplateColumns: `${GUTTER} 1fr` }}>
-          {/* Time gutter (right side in RTL) — bolder, more visible stamps */}
-          <div className="relative" style={{ height: totalHeight }}>
-            {hours.map((m) => (
-              <div
-                key={m}
-                className="tnum t-detail absolute w-full pe-2.5 text-end font-medium text-ink"
-                style={{ top: ((m - gridStart) / 60) * pxPerHour - 8 }}
-              >
-                {toHHMM(m)}
-              </div>
+    <div className="glass-solid p-0">
+      <div
+        ref={scrollRef}
+        className="overflow-auto rounded-2xl"
+        style={{ maxHeight: props.display ? undefined : scrollMax }}
+      >
+        <div className="min-w-[840px]">
+          {/* Header row — sticky, so day names stay visible while times scroll. */}
+          <div
+            className="sticky top-0 z-20 grid border-b-2 border-line bg-panel-solid"
+            style={{ gridTemplateColumns: `${GUTTER} repeat(7, 1fr)` }}
+          >
+            <div />
+            {days.map((d) => (
+              <DayHeader
+                key={d.date}
+                day={d}
+                today={today}
+                display={!!props.display}
+                editable={!!props.editable}
+                hideHardIndicators={props.hideHardIndicators}
+                onToggleDayLock={props.onToggleDayLock}
+              />
             ))}
           </div>
 
-          {/* Days canvas */}
-          <div className="relative" style={{ height: totalHeight }}>
-            {/* Layer 1: day columns (tints, borders, droppables) */}
-            <div className="absolute inset-0 grid grid-cols-7">
-              {days.map((d) => (
-                <DayBackground
-                  key={d.date}
-                  day={d}
-                  gridStart={gridStart}
-                  gridEnd={gridEnd}
-                  pxPerHour={pxPerHour}
-                  editable={!!props.editable}
-                  isToday={d.date === today}
-                />
-              ))}
+          {/* Body: gutter + one shared canvas for all seven days */}
+          <div className="grid" style={{ gridTemplateColumns: `${GUTTER} 1fr` }}>
+            {/* Time gutter — hours in medium, half hours light and smaller. */}
+            <div className="relative" style={{ height: canvasHeight }}>
+              {marks.map((m) => {
+                const onHour = m % 60 === 0
+                return (
+                  <div
+                    key={m}
+                    className="absolute flex w-full items-center justify-end gap-1.5 pe-2.5"
+                    style={{ top: ((m - gridStart) / 60) * pxPerHour - 8 }}
+                  >
+                    <span
+                      className={clsx(
+                        'tnum',
+                        onHour ? 'text-[14px] font-medium text-ink' : 'text-[12px] font-light text-ink-muted/70'
+                      )}
+                    >
+                      {toHHMM(m)}
+                    </span>
+                    <span className={clsx('h-px', onHour ? 'w-2.5 bg-stone' : 'w-1.5 bg-stone/50')} />
+                  </div>
+                )
+              })}
             </div>
 
-            {/* Layer 2: continuous hour lines across the whole week */}
-            {hours.map((m) => (
-              <div
-                key={m}
-                className="pointer-events-none absolute inset-x-0 border-t border-stone/70"
-                style={{ top: ((m - gridStart) / 60) * pxPerHour }}
-              />
-            ))}
-
-            {/* Layer 3: the blocks — one overlay so position changes animate (fly) */}
-            {weekEvents.map(({ event, day }) => (
-              <EventBlock
-                key={event.id}
-                event={event}
-                day={day}
-                gridStart={gridStart}
-                pxPerHour={pxPerHour}
-                editable={!!props.editable}
-                display={!!props.display}
-                nowMinutes={nowMinutes}
-                isToday={day.date === today}
-                isActive={activeId === event.id}
-                anyDragActive={activeId != null}
-                isSwapTarget={overId === event.id && activeId != null && activeId !== event.id && isSwappable(event)}
-                conflicted={props.conflictedEventIds?.has(event.id) ?? false}
-                hideHardIndicators={props.hideHardIndicators}
-                onClick={props.onEventClick}
-              />
-            ))}
-
-            {/* Layer 4: real-time "now" line inside today's column */}
-            {nowVisible && todayInfo ? (
-              <div
-                className="pointer-events-none absolute z-30"
-                style={{
-                  top: ((nowMinutes - gridStart) / 60) * pxPerHour,
-                  insetInlineStart: `${(todayInfo.dow / 7) * 100}%`,
-                  width: `${100 / 7}%`
-                }}
-              >
-                <div className="relative h-0.5 bg-danger">
-                  <span className="absolute -end-1 -top-[3px] h-2 w-2 rounded-full bg-danger" />
-                </div>
+            {/* Days canvas */}
+            <div className="relative" style={{ height: canvasHeight }}>
+              {/* Layer 1: day columns (tints, borders, droppables) */}
+              <div className="absolute inset-0 grid grid-cols-7">
+                {days.map((d) => (
+                  <DayBackground
+                    key={d.date}
+                    day={d}
+                    gridStart={gridStart}
+                    gridEnd={gridEnd}
+                    pxPerHour={pxPerHour}
+                    editable={!!props.editable}
+                    isToday={d.date === today}
+                  />
+                ))}
               </div>
-            ) : null}
+
+              {/* Layer 2: axis lines. The top line is skipped so it never
+                  overruns the first time stamp. */}
+              {marks.map((m) =>
+                m === gridStart ? null : (
+                  <div
+                    key={m}
+                    className={clsx(
+                      'pointer-events-none absolute inset-x-0 border-t',
+                      m % 60 === 0 ? 'border-stone/55' : 'border-stone/20'
+                    )}
+                    style={{ top: ((m - gridStart) / 60) * pxPerHour }}
+                  />
+                )
+              )}
+
+              {/* Layer 3: the blocks — one overlay so position changes animate (fly) */}
+              {weekEvents.map(({ event, day }) => (
+                <EventBlock
+                  key={event.id}
+                  event={event}
+                  day={day}
+                  top={placements.get(event.id)?.top ?? 0}
+                  blockHeight={placements.get(event.id)?.height ?? MIN_BLOCK_H}
+                  editable={!!props.editable}
+                  nowMinutes={nowMinutes}
+                  isToday={day.date === today}
+                  isActive={activeId === event.id}
+                  isSwapTarget={overId === event.id && activeId != null && activeId !== event.id && isSwappable(event)}
+                  conflicted={props.conflictedEventIds?.has(event.id) ?? false}
+                  hideHardIndicators={props.hideHardIndicators}
+                  onClick={props.onEventClick}
+                />
+              ))}
+
+              {/* Layer 4: real-time "now" line inside today's column */}
+              {nowVisible && todayInfo ? (
+                <div
+                  className="pointer-events-none absolute z-30"
+                  style={{
+                    top: ((nowMinutes - gridStart) / 60) * pxPerHour,
+                    insetInlineStart: `${(todayInfo.dow / 7) * 100}%`,
+                    width: `${100 / 7}%`
+                  }}
+                >
+                  <div className="relative h-0.5 bg-danger">
+                    <span className="absolute -end-1 -top-[3px] h-2 w-2 rounded-full bg-danger" />
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Legend */}
-      {typesInWeek.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-4 border-t border-line px-4 py-2.5">
-          {typesInWeek.map((t) => (
-            <span key={t} className="t-detail flex items-center gap-1.5 text-ink-muted">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: eventTypeColors[t] }} />
-              {eventTypeLabels[t]}
-            </span>
-          ))}
-        </div>
-      ) : null}
     </div>
   )
 
@@ -333,6 +371,88 @@ export function WeekGrid(props: WeekGridProps) {
     )
   }
   return grid
+}
+
+function DayHeader(props: {
+  day: DayInfo
+  today: string
+  display: boolean
+  editable: boolean
+  hideHardIndicators?: boolean
+  onToggleDayLock?: (date: string, locked: boolean) => void
+}) {
+  const { day } = props
+  const isToday = day.date === props.today
+  const special = hebDayInfo(day.date)
+  return (
+    <div
+      className={clsx(
+        'flex items-start justify-between gap-1 border-s-2 border-line px-2 py-2.5',
+        isToday && 'bg-primary-soft'
+      )}
+    >
+      <div className="min-w-0">
+        {/* One line: day name, Gregorian date, a long dash, the Hebrew date
+            (same size as the Gregorian). Any special-day tag sits below. The
+            column is narrow, so the whole line is kept compact and never wraps. */}
+        <div className="flex items-baseline gap-x-1 overflow-hidden">
+          <span
+            className={clsx('whitespace-nowrap font-semibold text-ink', props.display ? 'text-[22px]' : 'text-[16px]')}
+          >
+            {dayNames[day.dow]}
+          </span>
+          <span
+            className={clsx(
+              'tnum whitespace-nowrap font-normal text-ink-muted',
+              props.display ? 'text-[22px]' : 'text-[16px]'
+            )}
+          >
+            {format(parseISO(day.date), 'dd/MM')}
+          </span>
+          <span className={clsx('whitespace-nowrap font-light text-ink-muted/60', props.display ? 'text-[18px]' : 'text-[13px]')}>
+            —
+          </span>
+          <span
+            className={clsx('whitespace-nowrap font-light text-ink-muted', props.display ? 'text-[22px]' : 'text-[16px]')}
+          >
+            {hebrewDateShort(day.date)}
+          </span>
+        </div>
+        {special ? (
+          <span
+            className={clsx(
+              'mt-1 inline-block rounded-md px-1.5 py-0.5 text-[12px] font-medium',
+              special.kind === 'fast'
+                ? 'bg-danger-soft text-danger'
+                : special.kind === 'holiday' || special.kind === 'cholhamoed'
+                  ? 'bg-primary-soft text-primary-hover'
+                  : 'bg-neutral-block text-ink-muted'
+            )}
+          >
+            {special.label}
+          </span>
+        ) : null}
+      </div>
+      {props.onToggleDayLock && props.editable ? (
+        <button
+          type="button"
+          title={day.locked ? warnings.lockedDay : undefined}
+          aria-label={day.locked ? 'פתח נעילה' : 'נעל יום'}
+          onClick={() => props.onToggleDayLock?.(day.date, !day.locked)}
+          className={clsx(
+            'focus-ring shrink-0 rounded-lg p-1',
+            day.locked ? 'text-warning' : 'text-ink-muted/40 hover:text-ink-muted'
+          )}
+        >
+          <Icon name={day.locked ? 'lock' : 'unlock'} size={14} />
+        </button>
+      ) : day.locked && !props.hideHardIndicators ? (
+        <span title={warnings.lockedDay} className="shrink-0 text-warning">
+          <Icon name="lock" size={14} />
+        </span>
+      ) : null}
+    </div>
+  )
 }
 
 function DayBackground(props: {
@@ -383,14 +503,12 @@ function DayBackground(props: {
 function EventBlock(props: {
   event: ScheduleEvent
   day: DayInfo
-  gridStart: number
-  pxPerHour: number
+  top: number
+  blockHeight: number
   editable: boolean
-  display: boolean
   nowMinutes: number
   isToday: boolean
   isActive: boolean
-  anyDragActive: boolean
   isSwapTarget: boolean
   conflicted: boolean
   hideHardIndicators?: boolean
@@ -401,7 +519,6 @@ function EventBlock(props: {
 
   const drag = useDraggable({ id: e.id, disabled: !draggable })
   const drop = useDroppable({ id: e.id, disabled: !props.editable })
-
   const setRefs = (node: HTMLElement | null) => {
     drag.setNodeRef(node)
     drop.setNodeRef(node)
@@ -409,27 +526,40 @@ function EventBlock(props: {
 
   const startMin = e.isFullDay ? day.startMinutes : toMinutes(e.startTime)
   const endMin = e.isFullDay ? day.endMinutes : toMinutes(e.endTime)
-  const top = ((startMin - props.gridStart) / 60) * props.pxPerHour
-  const height = Math.max(13, ((endMin - startMin) / 60) * props.pxPerHour - 3)
-  const color = e.color ?? eventTypeColors[e.type] ?? '#185FA5'
 
+  const color = e.color ?? eventTypeColors[e.type] ?? '#3a86ff'
   const isNow = props.isToday && !e.isFullDay && props.nowMinutes >= startMin && props.nowMinutes < endMin
+  const timeText = e.isFullDay ? 'יום מלא' : `${e.startTime}–${e.endTime}`
 
-  // Hover behavior: the colored block shrinks to half its height and a white
-  // detail board slides out beneath it. Needs enough height to split.
-  const splittable = height >= 52
-  const timeText = e.isFullDay ? 'יום מלא' : `${e.startTime}-${e.endTime}`
-  const secondLine = e.location ?? e.shortDescription
-  const showSecondLine = height >= 96
+  // Room to show the time on its own line right under the title; tiny blocks
+  // instead swap the title for the time (same size + weight).
+  const canReveal = props.blockHeight >= 44
 
-  const indicators = (
-    <span className="mt-1 flex shrink-0 items-center gap-1 opacity-90">
-      {isNow ? <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" /> : null}
-      {e.sharedGroupId ? <Icon name="link" size={13} /> : null}
-      {!props.hideHardIndicators && e.isLocked ? <Icon name="lock" size={13} /> : null}
-      {!props.hideHardIndicators && !e.visibleToSoldiers ? <Icon name="eye-off" size={13} /> : null}
-    </span>
-  )
+  // The block IS the colour panel now — flat fill, a thin same-hue rim (no grey
+  // frame), less-rounded corners, no line texture.
+  const blockStyle = {
+    backgroundColor: color,
+    border: `1.5px solid ${shade(color, 0.28)}`,
+    top: props.top,
+    height: props.blockHeight,
+    insetInlineStart: `calc(${(day.dow / 7) * 100}% + 5px)`,
+    width: `calc(${100 / 7}% - 10px)`,
+    transform: drag.transform
+      ? `translate3d(${drag.transform.x}px, ${drag.transform.y}px, 0) scale(1.02)`
+      : undefined
+  } as CSSProperties
+
+  const indicators =
+    e.sharedGroupId || (!props.hideHardIndicators && (e.isLocked || !e.visibleToSoldiers)) ? (
+      <span className="absolute start-1.5 top-1.5 z-20 flex items-center gap-1 text-white opacity-80">
+        {e.sharedGroupId ? <Icon name="link" size={12} /> : null}
+        {!props.hideHardIndicators && e.isLocked ? <Icon name="lock" size={12} /> : null}
+        {!props.hideHardIndicators && !e.visibleToSoldiers ? <Icon name="eye-off" size={12} /> : null}
+      </span>
+    ) : null
+
+  // Time and title share the exact same size and weight (15px / 600, white).
+  const textClass = 'text-[15px] font-semibold leading-tight text-white'
 
   return (
     <div
@@ -444,8 +574,8 @@ function EventBlock(props: {
       }}
       title={draggable ? undefined : e.isLocked && !props.hideHardIndicators ? (e.lockReason ?? 'נעול') : undefined}
       className={clsx(
-        'group absolute z-10 overflow-hidden rounded-lg border border-black/5 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary',
-        // Fly animation: position/size changes (swap, move) glide smoothly.
+        'group absolute z-10 flex flex-col overflow-hidden rounded-md px-2.5 text-right shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary hover:shadow-md',
+        canReveal ? 'justify-start py-1' : 'justify-center py-0',
         props.isActive
           ? 'transition-none'
           : 'transition-[top,height,inset-inline-start,transform,box-shadow] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
@@ -453,45 +583,39 @@ function EventBlock(props: {
         drag.isDragging && 'z-40 opacity-95 shadow-pop',
         props.isSwapTarget && '-translate-y-1.5 shadow-lift ring-2 ring-primary',
         props.conflicted && 'ring-2 ring-danger ring-offset-1',
-        isNow && !props.conflicted && 'ring-2 ring-ink/60'
+        isNow && !props.conflicted && !props.isSwapTarget && 'ring-2 ring-ink/60'
       )}
-      style={{
-        top,
-        height,
-        insetInlineStart: `calc(${(day.dow / 7) * 100}% + 4px)`,
-        width: `calc(${100 / 7}% - 8px)`,
-        transform: drag.transform
-          ? `translate3d(${drag.transform.x}px, ${drag.transform.y}px, 0) scale(1.02)`
-          : undefined
-      }}
+      style={blockStyle}
     >
-      {splittable ? (
-        <div className="grid h-full grid-rows-[1fr_0fr] transition-[grid-template-rows] duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:grid-rows-[1fr_1fr]">
-          {/* Colored half (full height until hover) */}
-          <div className="min-h-0 overflow-hidden text-white" style={{ backgroundColor: color }}>
-            <div className="flex items-start justify-between gap-1 px-2 py-1">
-              <span className="truncate text-[20px] font-semibold leading-tight transition-[font-size] duration-[380ms] group-hover:text-[16px]">
-                {e.title}
-              </span>
-              {indicators}
-            </div>
-          </div>
-          {/* White board that slides out underneath on hover */}
-          <div className="min-h-0 overflow-hidden bg-panel-solid">
-            <div className="px-2 py-1 opacity-0 transition-opacity delay-100 duration-300 group-hover:opacity-100">
-              <div className="tnum t-body font-light text-ink">{timeText}</div>
-              {showSecondLine && secondLine ? (
-                <div className="t-body truncate font-light text-ink-muted">{secondLine}</div>
-              ) : null}
-            </div>
-          </div>
-        </div>
+      {indicators}
+      <span
+        className={clsx(
+          'relative z-10 w-full break-words text-right transition-opacity duration-200',
+          textClass,
+          canReveal ? 'line-clamp-2' : 'line-clamp-1 group-hover:opacity-0'
+        )}
+      >
+        {e.title}
+      </span>
+      {canReveal ? (
+        // The time appears right under the title on hover — same size and weight.
+        <span
+          dir="ltr"
+          className={clsx('tnum relative z-10 mt-0.5 w-full text-right opacity-0 transition-opacity duration-200 group-hover:opacity-100', textClass)}
+        >
+          {timeText}
+        </span>
       ) : (
-        // Tiny blocks: colored only, compact text.
-        <div className="flex h-full items-center justify-between gap-1 px-1.5 text-white" style={{ backgroundColor: color }}>
-          <span className="t-detail truncate font-semibold leading-none">{e.title}</span>
-          {height >= 22 ? indicators : null}
-        </div>
+        // Tiny blocks: swap the title for the time (same size + weight).
+        <span
+          dir="ltr"
+          className={clsx(
+            'tnum absolute inset-x-2.5 top-1/2 z-10 -translate-y-1/2 text-right opacity-0 transition-opacity duration-200 group-hover:opacity-100',
+            textClass
+          )}
+        >
+          {timeText}
+        </span>
       )}
     </div>
   )

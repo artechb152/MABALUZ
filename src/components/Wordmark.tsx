@@ -1,14 +1,15 @@
 import { clsx } from 'clsx'
 
 interface WordmarkProps {
-  /** Visual size of the wordmark. */
-  size?: 'sm' | 'md' | 'lg' | 'xl'
+  /** Visual size of the wordmark. `nav` fills the sidebar-column width. */
+  size?: 'sm' | 'md' | 'nav' | 'lg' | 'xl'
   className?: string
 }
 
 const sizeClasses: Record<NonNullable<WordmarkProps['size']>, string> = {
   sm: 'text-[20px]',
   md: 'text-[26px]',
+  nav: 'text-[34px]',
   lg: 'text-[34px]',
   xl: 'text-[52px]'
 }
