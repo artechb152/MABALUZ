@@ -5,7 +5,6 @@ import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/Button'
 import { Badge } from '@/components/Badge'
-import { Icon } from '@/assets/icons/Icon'
 import { buttons, dashboards, emptyStates, nav, trainingStatusLabels } from '@/lib/hebrewCopy'
 import { useCurrentUser, useMyTrainings } from '@/app/hooks'
 import { useDb } from '@/app/dbStore'
@@ -71,29 +70,24 @@ export function SeniorDashboard() {
         title={user ? dashCopy.hello(user.firstName) : nav.dashboard}
         subtitle={dashboards.myTrainings}
         actions={
-          <Button onClick={() => navigate('/trainings/new')}>
-            <Icon name="plus" size={16} />
-            {buttons.createTraining}
-          </Button>
+          <Button onClick={() => navigate('/trainings/new')}>{buttons.createTraining}</Button>
         }
       />
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label={dashboards.activeTrainings} value={totals.active} icon="training" tone="primary" />
+        <StatCard label={dashboards.activeTrainings} value={totals.active} tone="primary" />
         <StatCard
           label={dashboards.pendingApprovals}
           value={totals.pending}
-          icon="shared-schedule"
           tone={totals.pending > 0 ? 'warning' : 'neutral'}
           onClick={() => navigate('/shared')}
         />
         <StatCard
           label={dashboards.openConflicts}
           value={totals.conflicts}
-          icon="conflict"
           tone={totals.conflicts > 0 ? 'danger' : 'success'}
         />
-        <StatCard label={dashboards.upcomingLectures} value={totals.lectures} icon="guest-lecturer" tone="primary" />
+        <StatCard label={dashboards.upcomingLectures} value={totals.lectures} tone="primary" />
       </div>
 
       {perTraining.length === 0 ? (
@@ -107,8 +101,8 @@ export function SeniorDashboard() {
               <div key={training.id} className="card-tex p-5">
                 <div className="mb-3 flex items-start justify-between gap-2">
                   <div>
-                    <h2 className="text-base font-semibold text-ink">{training.name}</h2>
-                    <p className="tnum mt-0.5 text-xs text-ink-muted">
+                    <h2 className="text-[22px] font-semibold text-ink">{training.name}</h2>
+                    <p className="tnum mt-1 text-[14px] text-ink-muted">
                       {training.symbol} | {formatDateHe(training.startDate)} — {formatDateHe(training.endDate)}
                     </p>
                   </div>
@@ -120,7 +114,7 @@ export function SeniorDashboard() {
                   </div>
                 </div>
 
-                <dl className="mb-4 grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                <dl className="mb-4 grid grid-cols-2 gap-x-4 gap-y-2 text-[15px]">
                   <InfoRow label={dashboards.myCommander} value={commander?.displayName ?? ''} />
                   <InfoRow
                     label={dashCopy.soldiersCount}
@@ -145,7 +139,6 @@ export function SeniorDashboard() {
                 </dl>
 
                 <Button variant="secondary" className="w-full" onClick={() => enter(training)}>
-                  <Icon name="chevron-left" size={15} />
                   {dashCopy.enterTraining}
                 </Button>
               </div>
@@ -160,7 +153,7 @@ export function SeniorDashboard() {
 function InfoRow({ label, value, tone }: { label: string; value: string; tone?: 'warning' }) {
   return (
     <div className="flex items-baseline justify-between gap-2">
-      <dt className="text-xs text-ink-muted">{label}</dt>
+      <dt className="text-[14px] text-ink-muted">{label}</dt>
       <dd className={tone === 'warning' ? 'tnum font-semibold text-warning' : 'tnum font-medium text-ink'}>
         {value}
       </dd>

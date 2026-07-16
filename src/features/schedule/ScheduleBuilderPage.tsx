@@ -161,7 +161,6 @@ export function ScheduleBuilderPage() {
         actions={
           <>
             <Button variant="secondary" size="sm" onClick={() => setGenerateOpen(true)}>
-              <Icon name="calendar" size={15} />
               {buttons.generateSchedule}
             </Button>
             <Button
@@ -171,11 +170,9 @@ export function ScheduleBuilderPage() {
                 setEditorOpen(true)
               }}
             >
-              <Icon name="plus" size={15} />
               {buttons.addEvent}
             </Button>
-            <Button variant="secondary" size="sm" onClick={() => setPublishOpen(true)}>
-              <Icon name="publish" size={15} />
+            <Button variant="publish" size="sm" onClick={() => setPublishOpen(true)}>
               {buttons.publish}
             </Button>
           </>
@@ -227,11 +224,9 @@ export function ScheduleBuilderPage() {
             {buttons.discardChanges}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => window.print()}>
-            <Icon name="print" size={15} />
             {buttons.exportPdf}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => navigate('/display')}>
-            <Icon name="display" size={15} />
             {buttons.displayMode}
           </Button>
         </div>
@@ -244,10 +239,7 @@ export function ScheduleBuilderPage() {
           onClick={() => navigate('/conflicts')}
           className="focus-ring mb-4 flex w-full items-center justify-between rounded-xl border border-warning/30 bg-warning-soft px-4 py-2.5 text-sm text-warning"
         >
-          <span className="flex items-center gap-2">
-            <Icon name="conflict" size={16} />
-            {builderCopy.conflictsFound(conflicts.length)}
-          </span>
+          <span className="font-medium">{builderCopy.conflictsFound(conflicts.length)}</span>
           <span className="font-medium underline">{builderCopy.goToConflicts}</span>
         </button>
       ) : null}
@@ -334,10 +326,7 @@ export function ScheduleBuilderPage() {
           role="status"
         >
           <div className="mb-2 flex items-start justify-between gap-2">
-            <span className="t-body flex items-center gap-2 font-medium text-warning">
-              <Icon name="warning" size={17} />
-              {builderCopy.swapNoticeTitle}
-            </span>
+            <span className="t-body font-medium text-warning">{builderCopy.swapNoticeTitle}</span>
             <Button variant="ghost" size="sm" onClick={() => setSwapNotice(null)}>
               <Icon name="close" size={14} />
             </Button>
@@ -345,7 +334,6 @@ export function ScheduleBuilderPage() {
           <div className="space-y-1.5">
             {swapNotice.changes.map((c, i) => (
               <div key={i} className="flex items-center gap-2">
-                <Icon name="clock" size={15} className="shrink-0 text-ink-muted" />
                 <span className="t-body min-w-0 flex-1 truncate font-light text-ink">
                   {builderCopy.swapDurationChange(c.title, c.oldMin, c.newMin)}
                 </span>
