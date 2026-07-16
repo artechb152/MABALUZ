@@ -23,5 +23,16 @@ export const dashCopy = {
   totalTrainings: 'הכשרות במערכת',
   messagesSent: 'הודעות שנשלחו',
   adminQuickLinks: 'קיצורי ניהול',
-  fullDay: 'יום מלא'
+  fullDay: 'יום מלא',
+  // Commander dashboard
+  todaySchedule: 'לו״ז היום',
+  closestLectures: 'הרצאות חוץ קרובות',
+  commanderRequests: 'בקשות לטיפול',
+  noRequests: 'אין בקשות שממתינות לך כרגע.',
+  openConflictsTitle: 'קונפליקטים פתוחים בטיוטה',
+  noOpenConflicts: 'אין קונפליקטים פתוחים בטיוטה.',
+  draftStatusTitle: 'מצב הטיוטה',
+  toShared: 'למרכז הלו״זים המשותפים',
+  toConflicts: 'למרכז הקונפליקטים',
+  toPublish: 'למעבר לפרסום'
 } as const

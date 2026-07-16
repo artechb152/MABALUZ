@@ -4,16 +4,13 @@ import { clsx } from 'clsx'
 import { Icon, type IconName } from '@/assets/icons/Icon'
 import { Button } from '@/components/Button'
 import { Wordmark } from '@/components/Wordmark'
-import { Select } from '@/components/Input'
 import { AnimatedMenu } from '@/components/AnimatedDropdown'
+import { TrainingPicker } from './TrainingPicker'
 import { useSession } from './sessionStore'
-import { useUi } from './uiStore'
 import {
   useCurrentUser,
   useEffectiveRole,
   useMyNotifications,
-  useMyTrainings,
-  useSelectedTraining,
   useUnreadCount
 } from './hooks'
 import { markAllRead, markNotificationRead } from '@/data/services/notificationService'
@@ -26,7 +23,6 @@ import {
   roleLabels,
   userMenu
 } from '@/lib/hebrewCopy'
-import { formatDateHe } from '@/lib/time'
 import artechLogo from '@/assets/images/artech-logo.svg'
 import type { UserRole } from '@/types'
 
@@ -197,71 +193,28 @@ function UserMenu() {
 }
 
 export function AppShell() {
-  const navigate = useNavigate()
   const user = useCurrentUser()
   const effectiveRole = useEffectiveRole()
-  const { soldierPreview, setSoldierPreview, signOut } = useSession()
-  const myTrainings = useMyTrainings()
-  const selectedTraining = useSelectedTraining()
-  const setSelectedTraining = useUi((s) => s.setSelectedTraining)
+  const { soldierPreview, setSoldierPreview } = useSession()
 
   if (!user || !effectiveRole) return null
 
   const visibleNav = navItems.filter((item) => item.roles.includes(effectiveRole))
-  const canPreview = user.role !== 'SOLDIER'
 
   return (
     <div className="flex h-full flex-col">
       {/* Top navbar — full width, above the sidebar in hierarchy. z-30 lets the
           user/bell dropdowns overflow above the content column below. */}
-      <header className="relative z-30 flex items-center justify-between gap-4 border-b border-line bg-panel py-2 ps-4 pe-10 backdrop-blur-md">
+      <header className="relative z-30 flex items-center gap-4 border-b border-line bg-panel py-2 ps-4 pe-10 backdrop-blur-md">
         {/* Right (RTL start): the logo, sized to sit over the sidebar column. */}
         <div className="flex w-60 shrink-0 items-center ps-3">
           <Wordmark size="nav" />
         </div>
 
-        {/* Middle — blank in production; temporary switch-user for free design. */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              signOut()
-              navigate('/select-account')
-            }}
-          >
-            {buttons.switchUser}
-          </Button>
-          {canPreview ? (
-            <Button
-              variant={soldierPreview ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => setSoldierPreview(!soldierPreview)}
-            >
-              <Icon name="eye" size={16} />
-              {soldierPreview ? buttons.backToEditing : buttons.soldierPreview}
-            </Button>
-          ) : null}
-          {effectiveRole !== 'SOLDIER' && myTrainings.length > 0 ? (
-            <div className="flex items-center gap-2">
-              <Select
-                value={selectedTraining?.id ?? ''}
-                onChange={(e) => setSelectedTraining(e.target.value)}
-                className="w-60"
-              >
-                {myTrainings.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </Select>
-              {selectedTraining ? (
-                <span className="tnum t-detail hidden text-ink-muted xl:block">
-                  {formatDateHe(selectedTraining.startDate)} — {formatDateHe(selectedTraining.endDate)}
-                </span>
-              ) : null}
-            </div>
-          ) : null}
+        {/* Content-aligned region: the training picker's right edge sits at the
+            content column's right edge (level with the dashboard greeting). */}
+        <div className="flex min-w-0 flex-1 items-center">
+          {effectiveRole !== 'SOLDIER' ? <TrainingPicker /> : null}
         </div>
 
         {/* Left (RTL end): bell + user menu */}
@@ -303,8 +256,17 @@ export function AppShell() {
         {/* Content column: the cool grey canvas shows through so white cards pop. */}
         <div className="flex min-w-0 flex-1 flex-col bg-transparent">
           {soldierPreview ? (
-            <div className="t-detail border-b border-primary/20 bg-primary-soft px-6 py-1.5 text-center font-medium text-primary-hover">
-              תצוגת חייל פעילה — מוצג לו״ז שפורסם בלבד.
+            <div className="flex items-center justify-center gap-3 border-b border-primary/20 bg-primary-soft px-6 py-1.5">
+              <span className="t-detail font-medium text-primary-hover">
+                תצוגת חייל פעילה — מוצג לו״ז שפורסם בלבד.
+              </span>
+              <button
+                type="button"
+                onClick={() => setSoldierPreview(false)}
+                className="focus-ring rounded-lg border border-primary/40 px-2.5 py-0.5 text-[13px] font-medium text-primary-hover transition-colors hover:bg-primary-soft"
+              >
+                {buttons.backToEditing}
+              </button>
             </div>
           ) : null}
           <main className="min-w-0 flex-1 overflow-y-auto p-6">

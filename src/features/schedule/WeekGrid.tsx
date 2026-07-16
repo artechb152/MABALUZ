@@ -599,7 +599,7 @@ function EventBlock(props: {
       }}
       title={draggable ? undefined : e.isLocked && !props.hideHardIndicators ? (e.lockReason ?? 'נעול') : undefined}
       className={clsx(
-        'group absolute z-10 flex flex-col justify-center overflow-hidden rounded-md px-2.5 py-0 text-right shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary hover:shadow-md',
+        'group absolute z-10 flex flex-col justify-start overflow-hidden rounded-md px-2.5 py-0 text-right shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary hover:shadow-md',
         props.isActive
           ? 'transition-none'
           : 'transition-[top,height,inset-inline-start,transform,box-shadow] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
@@ -631,11 +631,11 @@ function EventBlock(props: {
           {timeText}
         </span>
       ) : (
-        // Tiny blocks: swap the title for the time (same size + weight).
+        // Tiny blocks: swap the title for the time (same size + weight), same spot.
         <span
           dir="ltr"
           className={clsx(
-            'tnum absolute inset-x-2.5 top-1/2 z-10 -translate-y-1/2 truncate text-right opacity-0 transition-opacity duration-200 group-hover:opacity-100',
+            'tnum absolute inset-x-2.5 top-0 z-10 truncate text-right opacity-0 transition-opacity duration-200 group-hover:opacity-100',
             textClass
           )}
         >
