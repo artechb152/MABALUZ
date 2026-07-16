@@ -132,7 +132,7 @@ export function ConflictCenterPage() {
               .map((id) => draft?.events.find((e) => e.id === id))
               .filter((e): e is NonNullable<typeof e> => Boolean(e))
             return (
-              <div key={conflict.id} className="glass p-5">
+              <div key={conflict.id} className="card-tex p-5">
                 <div className="flex items-start gap-3">
                   <span className="mt-0.5 shrink-0">
                     <Icon

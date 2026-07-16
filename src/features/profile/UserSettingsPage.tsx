@@ -14,7 +14,7 @@ export function UserSettingsPage() {
     <div className="mx-auto max-w-2xl">
       <PageHeader title={userMenu.personalSettingsTitle} />
 
-      <div className="glass space-y-4 p-6">
+      <div className="glass-solid space-y-4 p-6">
         <h2 className="t-subhead">התראות</h2>
         <div className="space-y-3">
           <Toggle

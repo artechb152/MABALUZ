@@ -26,7 +26,7 @@ export function LecturerConfirmationPage() {
 
   return (
     <div className="flex min-h-full items-center justify-center p-6">
-      <div className="glass w-full max-w-md p-8 text-center">
+      <div className="glass-solid w-full max-w-md p-8 text-center">
         <Wordmark size="lg" className="mb-4 inline-block" />
 
         {state === 'loading' ? (

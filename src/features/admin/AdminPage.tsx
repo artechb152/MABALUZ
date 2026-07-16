@@ -148,7 +148,7 @@ export function AdminPage() {
       ) : null}
 
       {tab === 'toggles' ? (
-        <div className="glass max-w-2xl space-y-3 p-5">
+        <div className="glass-solid max-w-2xl space-y-3 p-5">
           {(Object.keys(adminCopy.toggleLabels) as (keyof FeatureToggles)[]).map((key) => {
             const future = FUTURE_TOGGLES.includes(key)
             return (
@@ -171,7 +171,7 @@ export function AdminPage() {
       {tab === 'approvals' ? (
         <div className="max-w-2xl space-y-4">
           <EmptyState message={adminCopy.noApprovals} />
-          <div className="glass p-5">
+          <div className="card-tex p-5">
             <h3 className="mb-2 text-sm font-semibold text-ink">{adminCopy.approvalExampleTitle}</h3>
             <p className="whitespace-pre-line rounded-xl bg-neutral-block px-4 py-3 text-sm text-ink-muted">
               {approvals.trainingCommanderPending}
@@ -184,7 +184,7 @@ export function AdminPage() {
 
       {tab === 'logs' ? (
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="glass p-5">
+          <div className="card-tex p-5">
             <h3 className="mb-3 text-sm font-semibold text-ink">{adminCopy.messagesLog}</h3>
             {messages.length === 0 ? (
               <p className="py-4 text-center text-sm text-ink-muted">{emptyStates.noMessages}</p>
@@ -201,7 +201,7 @@ export function AdminPage() {
               </div>
             )}
           </div>
-          <div className="glass p-5">
+          <div className="card-tex p-5">
             <h3 className="mb-3 text-sm font-semibold text-ink">{adminCopy.notificationsLog}</h3>
             {notifications.length === 0 ? (
               <p className="py-4 text-center text-sm text-ink-muted">{emptyStates.noNotifications}</p>
@@ -223,7 +223,7 @@ export function AdminPage() {
       ) : null}
 
       {tab === 'settings' ? (
-        <div className="glass max-w-2xl space-y-3 p-5">
+        <div className="glass-solid max-w-2xl space-y-3 p-5">
           <div className="flex items-center justify-between rounded-xl border border-line bg-panel-solid px-4 py-3 text-sm">
             <span className="font-medium text-ink">{adminCopy.supportPhone}</span>
             {getSupportPhone() ? (
@@ -298,7 +298,7 @@ function FaqEditor({ faq }: { faq: FaqItem[] }) {
           ))}
       </div>
 
-      <div className="glass h-fit p-5">
+      <div className="glass-solid h-fit p-5">
         <h3 className="mb-3 text-sm font-semibold text-ink">
           {editing ? buttons.edit : adminCopy.addFaq}
         </h3>

@@ -36,7 +36,7 @@ export function TrainingListPage() {
           {trainings.map((t) => {
             const commander = users.find((u) => u.id === t.commanderId)
             return (
-              <div key={t.id} className="glass p-5">
+              <div key={t.id} className="card-tex p-5">
                 <div className="mb-2 flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-soft text-primary">
@@ -98,7 +98,7 @@ export function TrainingListPage() {
 
           {/* Reserved course presets */}
           {coursePresets.map((p) => (
-            <div key={p.id} className="glass border-dashed p-5 opacity-75">
+            <div key={p.id} className="glass-solid border-dashed p-5 opacity-75">
               <div className="mb-2 flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-block text-ink-muted">

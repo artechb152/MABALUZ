@@ -107,7 +107,7 @@ export function GuestLecturersPage() {
               const details = detailsFor(event.id)
               const lecturer = lecturers.find((l) => l.id === (details?.lecturerId ?? event.lecturerId))
               return (
-                <div key={event.id} className="glass p-5">
+                <div key={event.id} className="card-tex p-5">
                   <div className="mb-2 flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-soft text-primary">

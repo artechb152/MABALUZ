@@ -117,7 +117,7 @@ export function VersionsPage() {
               const safe = kind === 'PREVIOUS' ? isRevertSafe(published, schedule) : true
               const selected = compareIds.includes(schedule.id)
               return (
-                <div key={schedule.id} className={clsx('glass p-5', selected && 'ring-2 ring-primary')}>
+                <div key={schedule.id} className={clsx('card-tex p-5', selected && 'ring-2 ring-primary')}>
                   <div className="mb-2 flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-soft text-primary">
@@ -193,7 +193,7 @@ export function VersionsPage() {
           </div>
 
           {compareReport ? (
-            <div className="glass mt-6 p-5">
+            <div className="card-tex mt-6 p-5">
               <h2 className="mb-4 text-lg font-bold text-ink">{versionsCopy.compareTitle}</h2>
               <ImpactReportView report={compareReport} />
             </div>

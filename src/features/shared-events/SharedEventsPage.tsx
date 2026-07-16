@@ -103,7 +103,7 @@ export function SharedEventsPage() {
             const status = groupStatusLabel[group.status]
             const info = groupEventInfo(group)
             return (
-              <div key={group.id} className="glass p-5">
+              <div key={group.id} className="card-tex p-5">
                 <div className="mb-2 flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <Icon name="shared-schedule" size={18} className="text-primary" />
@@ -162,7 +162,7 @@ export function SharedEventsPage() {
               (a) => a.commanderId === user?.id && a.status === 'PENDING'
             )
             return (
-              <div key={request.id} className="glass p-5">
+              <div key={request.id} className="card-tex p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">

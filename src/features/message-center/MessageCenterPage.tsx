@@ -59,7 +59,7 @@ export function MessageCenterPage() {
       />
 
       <div className="mb-5 grid gap-3 lg:grid-cols-3">
-        <div className="glass p-4">
+        <div className="card-tex p-4">
           <h2 className="mb-2 text-sm font-semibold text-ink">{messageCenter.providerStatus}</h2>
           <div className="space-y-1.5 text-sm">
             <div className="flex items-center gap-2 rounded-xl bg-success-soft px-3 py-2 text-success">
@@ -73,7 +73,7 @@ export function MessageCenterPage() {
           </div>
         </div>
 
-        <div className="glass p-4 lg:col-span-2">
+        <div className="card-tex p-4 lg:col-span-2">
           <h2 className="mb-2 text-sm font-semibold text-ink">{mcCopy.upcomingConfirmations}</h2>
           {upcoming.length === 0 ? (
             <p className="py-3 text-center text-sm text-ink-muted">{emptyStates.noUpcomingLectures}</p>

@@ -31,7 +31,7 @@ export function ProfilePage() {
     <div className="mx-auto max-w-2xl">
       <PageHeader title={userMenu.profileTitle} />
 
-      <div className="glass p-6">
+      <div className="card-tex p-6">
         <div className="mb-5 flex items-center gap-4">
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-soft text-primary">
             <Icon name={roleIcon(user.role)} size={32} />

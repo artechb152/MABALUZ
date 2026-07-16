@@ -159,7 +159,7 @@ export function ExcelImportPage() {
         </div>
 
         {/* Locked AI card */}
-        <div className="glass relative overflow-hidden p-5 opacity-90">
+        <div className="card-tex p-5 opacity-90">
           <div className="mb-2 flex items-center gap-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-block text-ink-muted">
               <Icon name="lock" size={17} />

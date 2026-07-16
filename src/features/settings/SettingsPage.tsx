@@ -61,7 +61,7 @@ function SettingsForm({ training }: { training: Training }) {
       />
 
       <div className="space-y-4">
-        <section className="glass p-5">
+        <section className="glass-solid p-5">
           <h2 className="mb-4 text-sm font-semibold text-ink">{settingsCopy.trainingHours}</h2>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
@@ -94,7 +94,7 @@ function SettingsForm({ training }: { training: Training }) {
           </div>
         </section>
 
-        <section className="glass p-5">
+        <section className="glass-solid p-5">
           <h2 className="mb-3 text-sm font-semibold text-ink">
             {settingsCopy.lunchWindow} / {settingsCopy.dinnerWindow}
           </h2>
@@ -107,7 +107,7 @@ function SettingsForm({ training }: { training: Training }) {
           <p className="mt-2 text-xs text-ink-muted">{settingsCopy.mealNote}</p>
         </section>
 
-        <section className="glass space-y-3 p-5">
+        <section className="glass-solid space-y-3 p-5">
           <Toggle checked={form.allowMonthView} onChange={(v) => set('allowMonthView', v)} label={settingsCopy.allowMonthView} />
           <Toggle
             checked={form.allowSoldiersToSeeNextWeek}

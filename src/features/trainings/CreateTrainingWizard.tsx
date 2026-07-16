@@ -214,7 +214,7 @@ export function CreateTrainingWizard() {
         ))}
       </ol>
 
-      <div className="glass p-6">
+      <div className="glass-solid p-6">
         {step === 0 ? (
           <div className="grid grid-cols-2 gap-4">
             <Field label={trainingsCopy.presetLabel} className="col-span-2">

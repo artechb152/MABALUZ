@@ -104,7 +104,7 @@ export function SeniorDashboard() {
             const startsSoon =
               training.status === 'PLANNING' && daysBetween(today, training.startDate) <= 14
             return (
-              <div key={training.id} className="glass p-5">
+              <div key={training.id} className="card-tex p-5">
                 <div className="mb-3 flex items-start justify-between gap-2">
                   <div>
                     <h2 className="text-base font-semibold text-ink">{training.name}</h2>

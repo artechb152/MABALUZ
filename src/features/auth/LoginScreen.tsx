@@ -29,7 +29,7 @@ export function LoginScreen() {
           <p className="t-subhead text-ink-muted">{app.tagline}</p>
         </div>
 
-        <div className="glass p-6">
+        <div className="glass-solid p-6">
           {mode !== 'forgot' ? (
             <div
               role="tablist"

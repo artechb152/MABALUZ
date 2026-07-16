@@ -69,7 +69,7 @@ export function PeakDaysPage() {
           {peakEvents.map((e) => {
             const isPublished = publishedKeys.has(`${e.title}|${e.date}`)
             return (
-              <div key={e.id} className="glass p-5">
+              <div key={e.id} className="card-tex p-5">
                 <div className="mb-2 flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning-soft text-warning">

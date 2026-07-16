@@ -39,7 +39,7 @@ export function RoleSwitcherPage() {
           <p className="t-subhead text-ink-muted">{app.tagline}</p>
         </div>
 
-        <div className="glass p-6">
+        <div className="glass-solid p-6">
           <h2 className="t-subhead mb-1">{entry.chooseUser}</h2>
           <p className="t-body mb-4 text-ink-muted">{entry.devModeNote}</p>
 

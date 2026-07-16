@@ -9,7 +9,7 @@ export function ContactPage() {
   return (
     <div className="mx-auto max-w-2xl">
       <PageHeader title={nav.contact} />
-      <div className="glass p-8 text-center">
+      <div className="card-tex p-8 text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
           <Icon name="contact" size={26} />
         </div>
