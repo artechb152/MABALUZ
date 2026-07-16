@@ -5,7 +5,6 @@ import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/Button'
 import { Badge } from '@/components/Badge'
-import { Icon } from '@/assets/icons/Icon'
 import {
   buttons,
   conflictCenter,
@@ -133,25 +132,18 @@ export function ConflictCenterPage() {
               .filter((e): e is NonNullable<typeof e> => Boolean(e))
             return (
               <div key={conflict.id} className="card-tex p-5">
-                <div className="flex items-start gap-3">
-                  <span className="mt-0.5 shrink-0">
-                    <Icon
-                      name={conflict.severity === 'BLOCKING' ? 'conflict' : 'warning'}
-                      size={18}
-                      className={conflict.severity === 'BLOCKING' ? 'text-danger' : 'text-warning'}
-                    />
-                  </span>
-                  <div className="min-w-0 flex-1">
+                <div>
+                  <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge tone={severityTone[conflict.severity]}>
                         {conflictSeverityLabels[conflict.severity]}
                       </Badge>
-                      <h2 className="text-sm font-semibold text-ink">{conflict.title}</h2>
+                      <h2 className="text-[18px] font-semibold text-ink">{conflict.title}</h2>
                       {conflict.canOverride ? null : (
                         <Badge tone="neutral">{conflictCenter.requiresManualApproval}</Badge>
                       )}
                     </div>
-                    <p className="mt-1 text-sm text-ink-muted">{conflict.description}</p>
+                    <p className="mt-1 text-[15px] text-ink-muted">{conflict.description}</p>
 
                     {involved.length > 0 ? (
                       <div className="mt-2 flex flex-wrap gap-2">

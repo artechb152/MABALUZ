@@ -4,7 +4,6 @@ import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/Button'
 import { Badge } from '@/components/Badge'
-import { Icon } from '@/assets/icons/Icon'
 import { buttons, emptyStates, nav, statusLabels, versions, warnings } from '@/lib/hebrewCopy'
 import { useCurrentUser, useSelectedTraining } from '@/app/hooks'
 import { useDb } from '@/app/dbStore'
@@ -118,26 +117,21 @@ export function VersionsPage() {
               const selected = compareIds.includes(schedule.id)
               return (
                 <div key={schedule.id} className={clsx('card-tex p-5', selected && 'ring-2 ring-primary')}>
-                  <div className="mb-2 flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-soft text-primary">
-                        <Icon name={kind === 'DRAFT' ? 'draft' : 'history'} size={17} />
-                      </span>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h2 className="text-base font-semibold text-ink">
-                            {versions.versionNumber} {schedule.versionNumber}
-                          </h2>
-                          <Badge tone={tone}>{label}</Badge>
-                        </div>
-                        <p className="tnum text-xs text-ink-muted">
-                          {versionsCopy.eventsCount(schedule.events.length)}
-                          {schedule.publishedAt
-                            ? ` | ${versions.publishedAt}: ${formatDateHe(schedule.publishedAt.slice(0, 10))}`
-                            : ''}
-                          {publisher ? ` | ${versions.publishedBy}: ${publisher.displayName}` : ''}
-                        </p>
+                  <div className="mb-3 flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-[18px] font-semibold text-ink">
+                          {versions.versionNumber} {schedule.versionNumber}
+                        </h2>
+                        <Badge tone={tone}>{label}</Badge>
                       </div>
+                      <p className="tnum mt-0.5 text-[14px] text-ink-muted">
+                        {versionsCopy.eventsCount(schedule.events.length)}
+                        {schedule.publishedAt
+                          ? ` | ${versions.publishedAt}: ${formatDateHe(schedule.publishedAt.slice(0, 10))}`
+                          : ''}
+                        {publisher ? ` | ${versions.publishedBy}: ${publisher.displayName}` : ''}
+                      </p>
                     </div>
                   </div>
 
@@ -173,15 +167,10 @@ export function VersionsPage() {
                     {kind === 'PREVIOUS' ? (
                       safe ? (
                         <Button variant="secondary" size="sm" onClick={() => void handleRevert(schedule)}>
-                          <Icon name="undo" size={14} />
                           {buttons.revert}
                         </Button>
                       ) : (
-                        <span
-                          className="flex items-center gap-1.5 text-xs text-ink-muted"
-                          title={warnings.unsafeRollback}
-                        >
-                          <Icon name="lock" size={13} />
+                        <span className="text-[14px] text-ink-muted" title={warnings.unsafeRollback}>
                           {versionsCopy.unsafeRevert}
                         </span>
                       )

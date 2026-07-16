@@ -4,7 +4,6 @@ import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/Button'
 import { Badge } from '@/components/Badge'
-import { Icon } from '@/assets/icons/Icon'
 import {
   buttons,
   confirmationStatusLabels,
@@ -52,7 +51,6 @@ export function MessageCenterPage() {
         subtitle={messageCenter.senderName}
         actions={
           <Button onClick={() => void runNow()} loading={running}>
-            <Icon name="message-center" size={16} />
             {buttons.runReminderScheduler}
           </Button>
         }
@@ -60,21 +58,15 @@ export function MessageCenterPage() {
 
       <div className="mb-5 grid gap-3 lg:grid-cols-3">
         <div className="card-tex p-4">
-          <h2 className="mb-2 text-sm font-semibold text-ink">{messageCenter.providerStatus}</h2>
-          <div className="space-y-1.5 text-sm">
-            <div className="flex items-center gap-2 rounded-xl bg-success-soft px-3 py-2 text-success">
-              <Icon name="success" size={15} />
-              {messageCenter.mockProvider}
-            </div>
-            <div className="flex items-center gap-2 rounded-xl bg-neutral-block px-3 py-2 text-ink-muted">
-              <Icon name="lock" size={15} />
-              {messageCenter.outlookDisabled}
-            </div>
+          <h2 className="mb-2 text-[18px] font-semibold text-ink">{messageCenter.providerStatus}</h2>
+          <div className="space-y-1.5 text-[15px]">
+            <div className="rounded-xl bg-success-soft px-3 py-2 text-success">{messageCenter.mockProvider}</div>
+            <div className="rounded-xl bg-neutral-block px-3 py-2 text-ink-muted">{messageCenter.outlookDisabled}</div>
           </div>
         </div>
 
         <div className="card-tex p-4 lg:col-span-2">
-          <h2 className="mb-2 text-sm font-semibold text-ink">{mcCopy.upcomingConfirmations}</h2>
+          <h2 className="mb-2 text-[18px] font-semibold text-ink">{mcCopy.upcomingConfirmations}</h2>
           {upcoming.length === 0 ? (
             <p className="py-3 text-center text-sm text-ink-muted">{emptyStates.noUpcomingLectures}</p>
           ) : (
@@ -107,13 +99,12 @@ export function MessageCenterPage() {
       </div>
 
       {lastRun ? (
-        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl bg-primary-soft px-4 py-3 text-sm text-primary-hover">
-          <Icon name="success" size={16} />
+        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl bg-primary-soft px-4 py-3 text-[15px] text-primary-hover">
           <span className="tnum">{mcCopy.runSummary(lastRun.remindersSent, lastRun.thankYousSent, lastRun.warningsRaised)}</span>
         </div>
       ) : null}
 
-      <h2 className="mb-3 text-lg font-bold text-ink">{mcCopy.logTitle}</h2>
+      <h2 className="mb-3 text-[22px] font-semibold text-ink">{mcCopy.logTitle}</h2>
       {messages.length === 0 ? (
         <EmptyState message={emptyStates.noMessages} />
       ) : (

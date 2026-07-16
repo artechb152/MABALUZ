@@ -5,7 +5,6 @@ import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/Button'
 import { Badge } from '@/components/Badge'
-import { Icon } from '@/assets/icons/Icon'
 import { clsx } from 'clsx'
 import { aiPlaceholder, emptyStates, importScreen, nav } from '@/lib/hebrewCopy'
 import { useSelectedTraining } from '@/app/hooks'
@@ -103,10 +102,7 @@ export function ExcelImportPage() {
               void handleFiles(e.dataTransfer.files)
             }}
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-soft text-primary">
-              <Icon name="excel-import" size={22} />
-            </span>
-            <p className="text-sm text-ink">{importScreen.dropHere}</p>
+            <p className="text-[16px] font-medium text-ink">{importScreen.dropHere}</p>
             <div className="flex items-center gap-2">
               <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>
                 {importCopy.chooseFile}
@@ -134,8 +130,7 @@ export function ExcelImportPage() {
           {parsed.length > 0 ? (
             <div className="mt-4 flex flex-wrap gap-2">
               {parsed.map((p, i) => (
-                <div key={i} className="flex items-center gap-2 rounded-xl border border-line bg-panel-solid px-3 py-1.5 text-xs">
-                  <Icon name="excel-import" size={13} className="text-success" />
+                <div key={i} className="flex items-center gap-2 rounded-xl border border-line bg-panel-solid px-3 py-1.5 text-[13px]">
                   <span className="font-medium text-ink">{p.fileName}</span>
                   <span className="tnum text-ink-muted">{importCopy.blocksFound(p.blocks.length)}</span>
                   {p.warnings.length > 0 ? (
@@ -160,13 +155,8 @@ export function ExcelImportPage() {
 
         {/* Locked AI card */}
         <div className="card-tex p-5 opacity-90">
-          <div className="mb-2 flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-block text-ink-muted">
-              <Icon name="lock" size={17} />
-            </span>
-            <h2 className="text-sm font-semibold text-ink">{aiPlaceholder.title}</h2>
-          </div>
-          <p className="whitespace-pre-line text-sm text-ink-muted">{aiPlaceholder.body}</p>
+          <h2 className="mb-2 text-[18px] font-semibold text-ink">{aiPlaceholder.title}</h2>
+          <p className="whitespace-pre-line text-[15px] text-ink-muted">{aiPlaceholder.body}</p>
         </div>
       </div>
 
@@ -174,11 +164,10 @@ export function ExcelImportPage() {
       {template ? (
         <div className="mt-6">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-ink">{importScreen.title}</h2>
+            <h2 className="text-[22px] font-semibold text-ink">{importScreen.title}</h2>
             <div className="flex items-center gap-2">
               {saved ? (
-                <span className="flex items-center gap-1.5 text-sm text-success">
-                  <Icon name="success" size={15} />
+                <span className="flex items-center gap-1.5 text-[15px] text-success">
                   {importCopy.savedNote}
                   <Button variant="ghost" size="sm" onClick={() => navigate('/schedule')}>
                     {importCopy.goGenerate}

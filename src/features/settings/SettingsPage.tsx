@@ -6,7 +6,6 @@ import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/Button'
 import { Field, Input } from '@/components/Input'
 import { Toggle } from '@/components/Toggle'
-import { Icon } from '@/assets/icons/Icon'
 import { buttons, emptyStates, generic, nav, settingsCopy } from '@/lib/hebrewCopy'
 import { useCurrentUser, useSelectedTraining } from '@/app/hooks'
 import { updateTraining } from '@/data/services/trainingService'
@@ -50,10 +49,7 @@ function SettingsForm({ training }: { training: Training }) {
         actions={
           <div className="flex items-center gap-2">
             {saved ? (
-              <span className="flex items-center gap-1.5 text-sm text-success">
-                <Icon name="success" size={15} />
-                {buttons.save}
-              </span>
+              <span className="text-[15px] text-success">{buttons.save}</span>
             ) : null}
             <Button onClick={() => void save()}>{buttons.save}</Button>
           </div>
@@ -62,7 +58,7 @@ function SettingsForm({ training }: { training: Training }) {
 
       <div className="space-y-4">
         <section className="glass-solid p-5">
-          <h2 className="mb-4 text-sm font-semibold text-ink">{settingsCopy.trainingHours}</h2>
+          <h2 className="mb-4 text-[18px] font-semibold text-ink">{settingsCopy.trainingHours}</h2>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <Field label={`${settingsCopy.sundayToThursday} — ${generic.startTime}`}>
@@ -95,7 +91,7 @@ function SettingsForm({ training }: { training: Training }) {
         </section>
 
         <section className="glass-solid p-5">
-          <h2 className="mb-3 text-sm font-semibold text-ink">
+          <h2 className="mb-3 text-[18px] font-semibold text-ink">
             {settingsCopy.lunchWindow} / {settingsCopy.dinnerWindow}
           </h2>
           <p className="tnum text-sm text-ink-muted">
@@ -125,10 +121,7 @@ function SettingsForm({ training }: { training: Training }) {
         </section>
 
         {user?.role === 'ADMIN' ? (
-          <Button variant="secondary" onClick={() => navigate('/admin')}>
-            <Icon name="admin" size={15} />
-            {nav.adminArea}
-          </Button>
+          <Button variant="secondary" onClick={() => navigate('/admin')}>{nav.adminArea}</Button>
         ) : null}
       </div>
     </div>
