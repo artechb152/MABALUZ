@@ -6,7 +6,6 @@ import { Button } from '@/components/Button'
 import { Badge } from '@/components/Badge'
 import { Tabs } from '@/components/Tabs'
 import { Input } from '@/components/Input'
-import { Icon } from '@/assets/icons/Icon'
 import {
   buttons,
   confirmationStatusLabels,
@@ -76,13 +75,9 @@ export function GuestLecturersPage() {
         actions={
           <>
             <Button variant="secondary" onClick={() => setLecturerModal({ open: true, lecturer: null })}>
-              <Icon name="plus" size={16} />
               {lecturersCopy.addNewLecturer}
             </Button>
-            <Button onClick={() => setAddLectureOpen(true)}>
-              <Icon name="guest-lecturer" size={16} />
-              {buttons.addGuestLecture}
-            </Button>
+            <Button onClick={() => setAddLectureOpen(true)}>{buttons.addGuestLecture}</Button>
           </>
         }
       />
@@ -108,18 +103,13 @@ export function GuestLecturersPage() {
               const lecturer = lecturers.find((l) => l.id === (details?.lecturerId ?? event.lecturerId))
               return (
                 <div key={event.id} className="card-tex p-5">
-                  <div className="mb-2 flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-soft text-primary">
-                        <Icon name="guest-lecturer" size={17} />
-                      </span>
-                      <div>
-                        <h2 className="text-base font-semibold text-ink">{event.title}</h2>
-                        <p className="tnum text-xs text-ink-muted">
-                          {formatDateHe(event.date)} | {event.startTime}-{event.endTime}
-                          {event.location ? ` | ${event.location}` : ''}
-                        </p>
-                      </div>
+                  <div className="mb-3 flex items-start justify-between gap-2">
+                    <div>
+                      <h2 className="text-[22px] font-semibold text-ink">{event.title}</h2>
+                      <p className="tnum mt-0.5 text-[14px] text-ink-muted">
+                        {formatDateHe(event.date)} | {event.startTime}-{event.endTime}
+                        {event.location ? ` | ${event.location}` : ''}
+                      </p>
                     </div>
                     {details ? (
                       <Badge
@@ -139,17 +129,13 @@ export function GuestLecturersPage() {
                   </div>
 
                   {lecturer ? (
-                    <div className="mb-3 space-y-1 rounded-xl bg-neutral-block/60 px-3 py-2 text-sm">
+                    <div className="mb-3 space-y-1 rounded-xl bg-neutral-block/60 px-3 py-2 text-[15px]">
                       <div className="font-medium text-ink">{lecturer.fullName} — {lecturer.role}</div>
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-ink-muted">
-                        <a href={`tel:${lecturer.phone}`} className="tnum flex items-center gap-1 text-primary-hover">
-                          <Icon name="phone" size={12} />
+                      <div className="flex flex-wrap items-center gap-3 text-[14px] text-ink-muted">
+                        <a href={`tel:${lecturer.phone}`} className="tnum text-primary-hover">
                           {lecturer.phone}
                         </a>
-                        <span className="flex items-center gap-1">
-                          <Icon name="mail" size={12} />
-                          {lecturer.email}
-                        </span>
+                        <span dir="ltr">{lecturer.email}</span>
                       </div>
                     </div>
                   ) : null}
@@ -174,7 +160,6 @@ export function GuestLecturersPage() {
                           setCopiedFor(event.id)
                         }}
                       >
-                        <Icon name="link" size={14} />
                         {copiedFor === event.id ? lectCopy.linkCopied : lectCopy.copyConfirmLink}
                       </Button>
                     ) : null}

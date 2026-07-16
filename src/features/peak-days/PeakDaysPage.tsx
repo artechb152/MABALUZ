@@ -4,7 +4,6 @@ import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/Button'
 import { Badge } from '@/components/Badge'
-import { Icon } from '@/assets/icons/Icon'
 import { buttons, emptyStates, nav, peakDays, statusLabels } from '@/lib/hebrewCopy'
 import { useDraftSchedule, usePublishedSchedule, useSelectedTraining } from '@/app/hooks'
 import { removeDraftEvent } from '@/data/services/scheduleService'
@@ -56,7 +55,6 @@ export function PeakDaysPage() {
               setModalOpen(true)
             }}
           >
-            <Icon name="plus" size={16} />
             {buttons.addPeakDay}
           </Button>
         }
@@ -70,31 +68,21 @@ export function PeakDaysPage() {
             const isPublished = publishedKeys.has(`${e.title}|${e.date}`)
             return (
               <div key={e.id} className="card-tex p-5">
-                <div className="mb-2 flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning-soft text-warning">
-                      <Icon name="peak-day" size={17} />
-                    </span>
-                    <div>
-                      <h2 className="text-base font-semibold text-ink">{e.title}</h2>
-                      <p className="tnum text-xs text-ink-muted">
-                        {formatDateHe(e.date)} | {statusLabels.fullDay}
-                      </p>
-                    </div>
+                <div className="mb-3 flex items-start justify-between gap-2">
+                  <div>
+                    <h2 className="text-[22px] font-semibold text-ink">{e.title}</h2>
+                    <p className="tnum mt-0.5 text-[14px] text-ink-muted">
+                      {formatDateHe(e.date)} | {statusLabels.fullDay}
+                    </p>
                   </div>
                   <Badge tone={isPublished ? 'success' : 'warning'}>
                     {isPublished ? statusLabels.published : statusLabels.draft}
                   </Badge>
                 </div>
 
-                <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+                <div className="mb-3 flex flex-wrap items-center gap-2 text-[14px]">
                   {e.shortDescription ? <Badge tone="primary">{e.shortDescription}</Badge> : null}
-                  {e.location ? (
-                    <span className="flex items-center gap-1 text-ink-muted">
-                      <Icon name="location" size={13} />
-                      {e.location}
-                    </span>
-                  ) : null}
+                  {e.location ? <span className="text-ink-muted">{e.location}</span> : null}
                   <Badge tone={e.visibleToSoldiers ? 'success' : 'neutral'}>
                     {e.visibleToSoldiers ? statusLabels.visibleToSoldiers : statusLabels.hiddenFromSoldiers}
                   </Badge>

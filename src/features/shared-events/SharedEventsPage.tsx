@@ -4,7 +4,6 @@ import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/Button'
 import { Badge } from '@/components/Badge'
-import { Icon } from '@/assets/icons/Icon'
 import {
   approvalStatusLabels,
   buttons,
@@ -87,10 +86,7 @@ export function SharedEventsPage() {
         title={nav.sharedSchedules}
         subtitle={training?.name}
         actions={
-          <Button onClick={() => setCreateOpen(true)}>
-            <Icon name="plus" size={16} />
-            {buttons.addShared}
-          </Button>
+          <Button onClick={() => setCreateOpen(true)}>{buttons.addShared}</Button>
         }
       />
 
@@ -105,13 +101,10 @@ export function SharedEventsPage() {
             return (
               <div key={group.id} className="card-tex p-5">
                 <div className="mb-2 flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Icon name="shared-schedule" size={18} className="text-primary" />
-                    <h2 className="text-base font-semibold text-ink">{group.title}</h2>
-                  </div>
+                  <h2 className="text-[22px] font-semibold text-ink">{group.title}</h2>
                   <Badge tone={status.tone}>{status.label}</Badge>
                 </div>
-                {info ? <p className="tnum mb-2 text-sm text-ink-muted">{info}</p> : null}
+                {info ? <p className="tnum mb-2 text-[15px] text-ink-muted">{info}</p> : null}
                 <div className="mb-3 flex flex-wrap gap-1.5">
                   {group.linkedTrainingIds.map((tid) => (
                     <Badge key={tid} tone="primary">
@@ -167,7 +160,7 @@ export function SharedEventsPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <Badge tone={status.tone}>{status.label}</Badge>
-                      <span className="text-sm font-semibold text-ink">{request.description}</span>
+                      <span className="text-[16px] font-semibold text-ink">{request.description}</span>
                     </div>
                     <p className="tnum mt-1 text-xs text-ink-muted">
                       {sharedCopy.requestedBy(requester?.displayName ?? '')}
@@ -215,7 +208,6 @@ export function SharedEventsPage() {
                     ) : null}
                     {request.status === 'PENDING' || request.status === 'STUCK' ? (
                       <Button variant="ghost" size="sm" onClick={() => setContactsFor(request.id)}>
-                        <Icon name="phone" size={14} />
                         {buttons.showContactDetails}
                       </Button>
                     ) : null}

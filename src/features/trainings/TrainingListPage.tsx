@@ -3,7 +3,6 @@ import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/Button'
 import { Badge } from '@/components/Badge'
-import { Icon } from '@/assets/icons/Icon'
 import { buttons, emptyStates, nav, presets, trainingStatusLabels } from '@/lib/hebrewCopy'
 import { useMyTrainings } from '@/app/hooks'
 import { useDb } from '@/app/dbStore'
@@ -22,10 +21,7 @@ export function TrainingListPage() {
       <PageHeader
         title={nav.myTrainings}
         actions={
-          <Button onClick={() => navigate('/trainings/new')}>
-            <Icon name="plus" size={16} />
-            {buttons.createTraining}
-          </Button>
+          <Button onClick={() => navigate('/trainings/new')}>{buttons.createTraining}</Button>
         }
       />
 
@@ -37,24 +33,19 @@ export function TrainingListPage() {
             const commander = users.find((u) => u.id === t.commanderId)
             return (
               <div key={t.id} className="card-tex p-5">
-                <div className="mb-2 flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-soft text-primary">
-                      <Icon name="training" size={19} />
-                    </span>
-                    <div>
-                      <h2 className="text-base font-semibold text-ink">{t.name}</h2>
-                      <p className="tnum text-xs text-ink-muted">
-                        {t.symbol} | מחזור {t.cycleNumber} | {t.unit}
-                      </p>
-                    </div>
+                <div className="mb-3 flex items-start justify-between gap-2">
+                  <div>
+                    <h2 className="text-[22px] font-semibold text-ink">{t.name}</h2>
+                    <p className="tnum mt-0.5 text-[14px] text-ink-muted">
+                      {t.symbol} | מחזור {t.cycleNumber} | {t.unit}
+                    </p>
                   </div>
                   <Badge tone={t.status === 'ACTIVE' ? 'success' : 'neutral'}>
                     {trainingStatusLabels[t.status]}
                   </Badge>
                 </div>
 
-                <dl className="mb-4 space-y-1 text-sm">
+                <dl className="mb-4 space-y-1.5 text-[15px]">
                   <div className="flex justify-between">
                     <dt className="text-ink-muted">תאריכים</dt>
                     <dd className="tnum font-medium text-ink">
@@ -89,7 +80,6 @@ export function TrainingListPage() {
                     navigate('/schedule')
                   }}
                 >
-                  <Icon name="chevron-left" size={15} />
                   {buttons.openTraining}
                 </Button>
               </div>
@@ -99,20 +89,15 @@ export function TrainingListPage() {
           {/* Reserved course presets */}
           {coursePresets.map((p) => (
             <div key={p.id} className="glass-solid border-dashed p-5 opacity-75">
-              <div className="mb-2 flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-block text-ink-muted">
-                    <Icon name="lock" size={17} />
-                  </span>
-                  <div>
-                    <h2 className="text-base font-semibold text-ink">{presets.commandCourseTitle}</h2>
-                    <p className="text-xs text-ink-muted">{p.name}</p>
-                  </div>
+              <div className="mb-3 flex items-start justify-between gap-2">
+                <div>
+                  <h2 className="text-[22px] font-semibold text-ink">{presets.commandCourseTitle}</h2>
+                  <p className="mt-0.5 text-[14px] text-ink-muted">{p.name}</p>
                 </div>
                 <Badge tone="neutral">{trainingsCopy.presetDisabled}</Badge>
               </div>
-              <p className="text-sm text-ink-muted">{p.description}</p>
-              <p className="mt-1 text-xs text-ink-muted">{presets.commandCourseBody}</p>
+              <p className="text-[15px] text-ink-muted">{p.description}</p>
+              <p className="mt-1 text-[14px] text-ink-muted">{presets.commandCourseBody}</p>
             </div>
           ))}
         </div>
