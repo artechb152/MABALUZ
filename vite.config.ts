@@ -1,10 +1,12 @@
-// Config for plain-browser dev (`npm run dev:web`) and any tool that reads the
-// default vite config. The Electron build uses electron.vite.config.ts.
+// Primary build config — MABALUZ is a plain Vite web app (desktop-oriented).
+// `npm run dev` serves it; `npm run build` outputs static files to dist/.
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'node:path'
 
 export default defineConfig({
+  // Relative base so the built app works from any path (incl. file://).
+  base: './',
   plugins: [react()],
   resolve: {
     alias: { '@': resolve(__dirname, 'src') }

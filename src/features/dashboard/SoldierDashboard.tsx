@@ -138,7 +138,7 @@ function TodayBlock({ event, isNow }: { event: ScheduleEvent; isNow: boolean }) 
     >
       {/* Colored part (RTL start / right). */}
       <div className="relative flex flex-[2] items-center overflow-hidden rounded-xl px-5 py-4 shadow-md" style={{ backgroundColor: color }}>
-        <span className="tex-dots tex-mask-left rounded-xl" style={{ '--tex-fg': 'rgba(255,255,255,0.2)' } as CSSProperties} />
+        <span className="tex-dots tex-mask-left rounded-xl" style={{ '--tex-fg': 'rgba(255,255,255,0.8)' } as CSSProperties} />
         {isNow ? (
           <span className="absolute end-2.5 top-2.5 z-20 h-2.5 w-2.5 animate-pulse rounded-full" style={{ backgroundColor: '#ff006e' }} />
         ) : null}

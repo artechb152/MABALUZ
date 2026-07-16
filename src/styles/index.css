@@ -150,7 +150,7 @@ body {
     @apply pointer-events-none absolute inset-0;
     background-image: radial-gradient(circle, var(--tex-fg, rgba(255, 255, 255, 0.22)) 2.5px, transparent 3.4px);
     background-size: 17px 17px;
-    background-position: calc(50% - 5px) center;
+    background-position: calc(50% - 11px) center;
   }
   /* Thick diagonal lines running "\" (bottom-right to top-left). */
   .tex-lines {

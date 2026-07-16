@@ -28,7 +28,7 @@ function PrayerPanel({ slot, index, count }: { slot: PrayerSlot; index: number; 
       )}
       style={style}
     >
-      <span className="relative z-10 text-[21px] font-bold leading-tight">{slot.name}</span>
+      <span className="relative z-10 text-[21px] font-semibold leading-tight">{slot.name}</span>
       <span dir="ltr" className="relative z-10 tnum text-[18px] font-normal leading-none">
         {slot.start}–{slot.end}
       </span>
@@ -62,7 +62,7 @@ function DayRow({ date, today }: { date: string; today: string }) {
   return (
     <div
       className={clsx(
-        'flex h-[92px] items-stretch overflow-hidden rounded-2xl border bg-panel-solid shadow-card',
+        'flex min-h-[68px] flex-1 items-stretch overflow-hidden rounded-2xl border bg-panel-solid shadow-card',
         isToday ? 'border-primary/40 ring-1 ring-primary/30' : 'border-line'
       )}
     >
@@ -101,15 +101,16 @@ export function PrayersPage() {
   const ctx = useMemo(() => weekPrayerContext(days), [days])
 
   return (
-    <div>
+    // Fills the viewport: the page itself never scrolls; the rows flex to fit.
+    <div className="flex h-full flex-col">
       <h1 className="t-display mb-3">
         {prayersCopy.title}
         <span className="font-light text-ink-muted"> - {prayersCopy.subtitle}</span>
       </h1>
 
-      <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid min-h-0 flex-1 gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         {/* Right (RTL first): the controls line, then the week's prayer rows. */}
-        <div>
+        <div className="flex min-h-0 flex-col">
           <div className="mb-3 flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
               <button
@@ -147,19 +148,19 @@ export function PrayersPage() {
             ) : null}
           </div>
 
-          <div className="space-y-3">
+          <div className="flex min-h-0 flex-1 flex-col gap-3">
             {days.map((date) => (
               <DayRow key={date} date={date} today={today} />
             ))}
           </div>
         </div>
 
-        {/* Left: a folder tab bulging from the card top (in the card's own border
+        {/* Left: a folder tab bulging from the card top (in the rosh-chodesh note's
             colour), then the photo filling the rest to the last prayer row. */}
-        <div className="flex flex-col">
+        <div className="flex min-h-0 flex-col">
           {/* Folder tab — more tabs can be added here later. */}
           <div className="relative z-10 ps-4">
-            <span className="inline-block rounded-t-xl bg-line px-5 py-3 text-[16px] font-semibold text-ink">
+            <span className="inline-block rounded-t-xl bg-neutral-block px-5 py-3 text-[16px] font-semibold text-ink">
               {prayersCopy.instructionsTab}
             </span>
           </div>
@@ -180,7 +181,7 @@ export function PrayersPage() {
 
           {/* flex-1 with an absolutely-filled image, so the photo fills the
               leftover height and its bottom lines up with the last prayer row. */}
-          <figure className="relative mt-5 min-h-[200px] flex-1 overflow-hidden rounded-2xl border border-line shadow-card">
+          <figure className="relative mt-5 min-h-0 flex-1 overflow-hidden rounded-2xl border border-line shadow-card">
             <img
               src={prayerPhoto}
               alt={prayersCopy.photoAlt}

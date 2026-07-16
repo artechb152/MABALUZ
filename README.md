@@ -1,6 +1,6 @@
 # מה-בלוז (Mabaluz)
 
-מערכת חכמה לבניית לו״זי הכשרה — desktop app for building and managing training schedules.
+מערכת חכמה לבניית לו״זי הכשרה — a web app (desktop-oriented) for building and managing training schedules.
 Developed by ARTECH (יחידת ARTECH במערך ההדרכה של חיל המודיעין — בה״ד 15). First target: trainings at בה״ד 15; architected to generalize to other units and repeated training programs.
 
 The UI is **Hebrew, RTL, light mode only**. Internal code is English.
@@ -13,7 +13,7 @@ A polished local prototype/MVP. **Everything runs locally with mock data** — t
 
 - Node.js 20+ (developed on Node 26)
 - npm 10+
-- Windows / macOS / Linux desktop
+- A modern desktop browser (the UI targets desktop widths)
 
 ## Install
 
@@ -24,20 +24,20 @@ npm install
 ## Run (development)
 
 ```bash
-npm run dev        # Electron app with hot reload (recommended)
-npm run dev:web    # renderer only, in a browser (useful for quick UI work)
+npm run dev        # Vite dev server with hot reload — open the printed localhost URL
 ```
 
 ## Build
 
 ```bash
-npm run build      # bundles main/preload/renderer into out/
+npm run build      # type-checks, then bundles static files into dist/
+npm run preview    # serve the production build locally
 ```
 
 ## Checks
 
 ```bash
-npm run typecheck  # tsc over renderer + electron/scripts
+npm run typecheck  # tsc over renderer + scripts/configs
 npm run lint       # eslint
 npm run test       # vitest (scheduling engine + smoke tests)
 ```
@@ -98,9 +98,8 @@ Copy `.env.example` to `.env`. Nothing is required — the app runs with safe de
 
 ## Architecture overview
 
-Electron desktop-first, but all business logic is Electron-free so a future web refactor is possible:
+A plain Vite single-page web app (desktop-oriented); no Electron, no server:
 
-- `electron/main`, `electron/preload` — thin desktop shell.
 - `src/features/*` — feature modules; UI talks to Promise-based mock services.
 - `src/features/scheduling-engine` — pure TypeScript: slot building, hard-first placement (shared → peak days → guest lectures → reserve → meals → imported flexible → manual flexible), conflict detection, impact reports, suggestions.
 - Draft/publish model: commanders edit drafts; soldiers see published schedules only; last 2 published versions are retained.

@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { clsx } from 'clsx'
 import { Icon, type IconName } from '@/assets/icons/Icon'
 import { Button } from '@/components/Button'
@@ -14,7 +13,6 @@ import {
   useEffectiveRole,
   useMyNotifications,
   useMyTrainings,
-  usePublishedSchedule,
   useSelectedTraining,
   useUnreadCount
 } from './hooks'
@@ -29,7 +27,6 @@ import {
   userMenu
 } from '@/lib/hebrewCopy'
 import { formatDateHe } from '@/lib/time'
-import { soldierCopy } from '@/features/schedule/copy'
 import artechLogo from '@/assets/images/artech-logo.svg'
 import type { UserRole } from '@/types'
 
@@ -143,7 +140,7 @@ function UserMenu() {
   return (
     <AnimatedMenu
       matchTriggerWidth
-      className="-me-[10px]"
+      className="-me-[11px]"
       items={[
         {
           id: 'profile',
@@ -196,41 +193,6 @@ function UserMenu() {
         </span>
       )}
     />
-  )
-}
-
-/** Indigo pop-up under the "הלו״ז שלי" nav item — pops in only while the
-    My-Schedule tab is active, and pops back off when the user navigates away. */
-function SidebarCommanderNote() {
-  const location = useLocation()
-  const training = useMyTrainings()[0] ?? null
-  const published = usePublishedSchedule(training)
-  const active = location.pathname.startsWith('/my-schedule')
-  const note = published?.commanderNote
-
-  return (
-    <AnimatePresence initial={false}>
-      {active && note ? (
-        <motion.div
-          initial={{ opacity: 0, height: 0, y: -8, scale: 0.94 }}
-          animate={{ opacity: 1, height: 'auto', y: 0, scale: 1 }}
-          exit={{ opacity: 0, height: 0, y: -8, scale: 0.94 }}
-          transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-          className="overflow-hidden"
-        >
-          <div className="mx-1 mb-1 mt-1.5">
-            <div className="relative rounded-xl border border-primary/30 bg-primary-soft px-3 py-2.5 shadow-card">
-              <span className="absolute -top-1 end-6 h-2.5 w-2.5 rotate-45 border-s border-t border-primary/30 bg-primary-soft" />
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-                <span className="t-detail font-medium text-primary-hover">{soldierCopy.commanderNote}</span>
-              </div>
-              <p className="t-detail mt-1 leading-relaxed text-ink">{note}</p>
-            </div>
-          </div>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>
   )
 }
 
@@ -314,26 +276,22 @@ export function AppShell() {
         <aside className="flex w-60 shrink-0 flex-col border-s border-line bg-panel pt-3 backdrop-blur-md">
           <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-4">
             {visibleNav.map((item) => (
-              <div key={item.to}>
-                <NavLink
-                  to={item.to}
-                  end={item.to === '/schedule'}
-                  className={({ isActive }) =>
-                    clsx(
-                      'focus-ring t-body flex items-center gap-3 rounded-xl px-3 py-2 font-medium transition-colors',
-                      isActive
-                        ? 'bg-primary-soft text-primary-hover'
-                        : 'text-ink-muted hover:bg-neutral-block hover:text-ink'
-                    )
-                  }
-                >
-                  <Icon name={item.icon} size={18} />
-                  {item.label}
-                </NavLink>
-                {item.to === '/my-schedule' && effectiveRole === 'SOLDIER' ? (
-                  <SidebarCommanderNote />
-                ) : null}
-              </div>
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === '/schedule'}
+                className={({ isActive }) =>
+                  clsx(
+                    'focus-ring t-body flex items-center gap-3 rounded-xl px-3 py-2 font-medium transition-colors',
+                    isActive
+                      ? 'bg-primary-soft text-primary-hover'
+                      : 'text-ink-muted hover:bg-neutral-block hover:text-ink'
+                  )
+                }
+              >
+                <Icon name={item.icon} size={18} />
+                {item.label}
+              </NavLink>
             ))}
           </nav>
           <div className="flex flex-col items-start gap-1.5 border-t border-line px-5 py-4">

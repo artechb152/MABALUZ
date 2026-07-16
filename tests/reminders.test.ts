@@ -9,6 +9,10 @@ import { addDaysISO, todayISO } from '@/lib/time'
 
 const commander = mockUsers.find((u) => u.id === 'user-commander-noam')!
 
+// Deterministic "now" 4h before the tomorrow-10:00 lecture — inside the 24h
+// reminder window regardless of the wall clock (the scheduler takes `now`).
+const reminderNow = () => new Date(`${addDaysISO(todayISO(), 1)}T06:00:00`)
+
 beforeEach(() => {
   db.reset()
 })
@@ -31,7 +35,7 @@ async function addLectureTomorrowAt10(): Promise<string> {
 describe('mock reminder bot (24h before lecture)', () => {
   it('logs a Hebrew reminder email with the confirmation link and updates status', async () => {
     const eventId = await addLectureTomorrowAt10()
-    const result = await runReminderScheduler()
+    const result = await runReminderScheduler(reminderNow())
     expect(result.remindersSent).toBeGreaterThanOrEqual(1)
 
     const log = db.get().messages.find((m) => m.eventId === eventId)
@@ -53,8 +57,8 @@ describe('mock reminder bot (24h before lecture)', () => {
 
   it('does not send the same reminder twice', async () => {
     const eventId = await addLectureTomorrowAt10()
-    await runReminderScheduler()
-    const second = await runReminderScheduler()
+    await runReminderScheduler(reminderNow())
+    const second = await runReminderScheduler(reminderNow())
     expect(second.remindersSent).toBe(0)
     const logs = db.get().messages.filter((m) => m.eventId === eventId && m.kind === 'LECTURE_REMINDER')
     expect(logs).toHaveLength(1)

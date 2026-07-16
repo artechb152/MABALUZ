@@ -22,6 +22,7 @@ export function SoldierSchedulePage() {
   const currentWeek = weekStartISO(todayISO())
   const [weekStart, setWeekStart] = useState(currentWeek)
   const [selected, setSelected] = useState<ScheduleEvent | null>(null)
+  const [noteOpen, setNoteOpen] = useState(false)
 
   // Training names a shared block/lecture is shared with (excluding this training).
   const sharedWith = useMemo(() => {
@@ -56,10 +57,10 @@ export function SoldierSchedulePage() {
   const atMinWeek = weekStart <= currentWeek
 
   return (
-    <div>
-      {/* Commander note lives as a pop-up under the sidebar's הלו״ז שלי item. */}
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-        <div>
+    // Fills the viewport: the page itself never scrolls, the grid scrolls inside.
+    <div className="flex h-full flex-col">
+      <div className="mb-4 flex flex-wrap items-stretch justify-between gap-4">
+        <div className="shrink-0">
           {/* Title: "הלו״ז שלי - <training>" — same size, training name lighter. */}
           <h1 className="t-display">
             {nav.mySchedule}
@@ -95,28 +96,46 @@ export function SoldierSchedulePage() {
           </div>
         </div>
 
+        {/* Latest commander note, stretched across the middle. Click to read the
+            full text; a long note is clamped to two lines with an ellipsis. */}
+        {published?.commanderNote ? (
+          <button
+            type="button"
+            onClick={() => setNoteOpen(true)}
+            className="focus-ring flex min-w-[220px] flex-1 flex-col justify-center gap-1 rounded-2xl border border-primary/25 bg-primary-soft/50 px-5 py-3 text-right shadow-card transition-colors hover:bg-primary-soft"
+          >
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-primary" />
+              <span className="text-[15px] font-semibold text-primary-hover">{soldierCopy.commanderNote}</span>
+            </span>
+            <span className="line-clamp-2 text-[16px] leading-snug text-ink">{published.commanderNote}</span>
+          </button>
+        ) : null}
+
         {/* Colour guide in its own card, textured with thick slanted lines across
             the whole field (no fade). */}
-        <div className="relative overflow-hidden rounded-2xl border border-line bg-panel-solid p-4 shadow-card">
+        <div className="relative flex shrink-0 items-center overflow-hidden rounded-2xl border border-line bg-panel-solid p-4 shadow-card">
           <span className="tex-lines" style={{ '--tex-fg': 'rgba(79,70,229,0.14)' } as CSSProperties} />
-          <div className="relative z-10">
+          <div className="relative z-10 w-full">
             <ScheduleLegend events={visibleEvents} />
           </div>
         </div>
       </div>
 
-      {published ? (
-        <WeekGrid
-          events={visibleEvents}
-          weekStart={weekStart}
-          settings={training.settings}
-          editable={false}
-          hideHardIndicators
-          onEventClick={setSelected}
-        />
-      ) : (
-        <EmptyState message={soldierCopy.noPublished} />
-      )}
+      <div className="min-h-0 flex-1">
+        {published ? (
+          <WeekGrid
+            events={visibleEvents}
+            weekStart={weekStart}
+            settings={training.settings}
+            editable={false}
+            hideHardIndicators
+            onEventClick={setSelected}
+          />
+        ) : (
+          <EmptyState message={soldierCopy.noPublished} />
+        )}
+      </div>
 
       <Modal
         open={selected != null}
@@ -125,6 +144,10 @@ export function SoldierSchedulePage() {
         size="md"
       >
         {selected ? <SoldierEventDetails event={selected} sharedWith={sharedWith} /> : null}
+      </Modal>
+
+      <Modal open={noteOpen} onClose={() => setNoteOpen(false)} title={soldierCopy.commanderNote} size="md">
+        <p className="t-body whitespace-pre-line leading-relaxed text-ink">{published?.commanderNote}</p>
       </Modal>
     </div>
   )

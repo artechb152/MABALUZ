@@ -51,10 +51,12 @@ interface DayInfo {
 }
 
 const GUTTER = '74px'
-const MIN_HOUR_PX = 72 // floor, so an hour always has room to breathe
+const MIN_HOUR_PX = 88 // floor: a 15-min block is ~22px — readable, and its true
+// height so it never needs inflating (which would make it overlap the next block)
 const MAX_HOUR_PX = 120
-const MIN_BLOCK_H = 22 // small floor so even a 15-min title fits, uncut
-const SCROLL_RESERVE = 18
+const MIN_BLOCK_H = 18 // tiny safety floor; real 15-min blocks clear it on their own
+const SCROLL_RESERVE = 30 // keep the grid bottom clear of the page's padding
+const TOP_PAD = 12 // spacer under the sticky header so 08:00 never hides behind it
 
 /** Only flexible, non-locked, non-full-day blocks can move or be swapped. */
 function isSwappable(e: ScheduleEvent): boolean {
@@ -76,13 +78,20 @@ export function ScheduleLegend({ events, className }: { events: ScheduleEvent[];
     return [...present]
   }, [events])
   if (types.length === 0) return null
+  // Split across two right-aligned rows, balanced.
+  const mid = Math.ceil(types.length / 2)
+  const rows = [types.slice(0, mid), types.slice(mid)].filter((r) => r.length > 0)
   return (
-    <div className={clsx('flex flex-wrap items-center gap-x-4 gap-y-2', className)}>
-      {types.map((t) => (
-        <span key={t} className="flex items-center gap-2 text-[15px] text-ink">
-          <span className="h-3.5 w-3.5 shrink-0 rounded-full shadow-sm" style={{ backgroundColor: eventTypeColors[t] }} />
-          {eventTypeLabels[t]}
-        </span>
+    <div className={clsx('flex flex-col justify-center gap-2.5', className)}>
+      {rows.map((row, i) => (
+        <div key={i} className="flex flex-wrap justify-start gap-x-5 gap-y-1.5">
+          {row.map((t) => (
+            <span key={t} className="flex items-center gap-2 text-[15px] text-ink">
+              <span className="h-3.5 w-3.5 shrink-0 rounded-full shadow-sm" style={{ backgroundColor: eventTypeColors[t] }} />
+              {eventTypeLabels[t]}
+            </span>
+          ))}
+        </div>
       ))}
     </div>
   )
@@ -253,6 +262,9 @@ export function WeekGrid(props: WeekGridProps) {
               />
             ))}
           </div>
+
+          {/* Spacer so the first time stamp (08:00) clears the sticky header. */}
+          <div aria-hidden style={{ height: TOP_PAD }} />
 
           {/* Body: gutter + one shared canvas for all seven days */}
           <div className="grid" style={{ gridTemplateColumns: `${GUTTER} 1fr` }}>
@@ -531,9 +543,15 @@ function EventBlock(props: {
   const isNow = props.isToday && !e.isFullDay && props.nowMinutes >= startMin && props.nowMinutes < endMin
   const timeText = e.isFullDay ? 'יום מלא' : `${e.startTime}–${e.endTime}`
 
-  // Room to show the time on its own line right under the title; tiny blocks
-  // instead swap the title for the time (same size + weight).
-  const canReveal = props.blockHeight >= 44
+  // How many text lines actually fit, so the title never breaks off at the
+  // bottom at any block height. The content is vertically centred, the title is
+  // clamped to the lines that fit, and — when there's a line to spare — the time
+  // takes the last line (revealed on hover); otherwise it swaps the title.
+  const LINE_H = 19 // a 15px title at leading-tight
+  const innerH = props.blockHeight - 3 // minus the 1.5px rim on each edge
+  const totalLines = Math.max(1, Math.min(3, Math.floor(innerH / LINE_H)))
+  const canReveal = totalLines >= 2
+  const titleLines = canReveal ? totalLines - 1 : 1
 
   // The block IS the colour panel now — flat fill, a thin same-hue rim (no grey
   // frame), less-rounded corners, no line texture.
@@ -547,6 +565,13 @@ function EventBlock(props: {
     transform: drag.transform
       ? `translate3d(${drag.transform.x}px, ${drag.transform.y}px, 0) scale(1.02)`
       : undefined
+  } as CSSProperties
+
+  const clampStyle = {
+    display: '-webkit-box',
+    WebkitBoxOrient: 'vertical',
+    WebkitLineClamp: titleLines,
+    overflow: 'hidden'
   } as CSSProperties
 
   const indicators =
@@ -574,8 +599,7 @@ function EventBlock(props: {
       }}
       title={draggable ? undefined : e.isLocked && !props.hideHardIndicators ? (e.lockReason ?? 'נעול') : undefined}
       className={clsx(
-        'group absolute z-10 flex flex-col overflow-hidden rounded-md px-2.5 text-right shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary hover:shadow-md',
-        canReveal ? 'justify-start py-1' : 'justify-center py-0',
+        'group absolute z-10 flex flex-col justify-center overflow-hidden rounded-md px-2.5 py-0 text-right shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary hover:shadow-md',
         props.isActive
           ? 'transition-none'
           : 'transition-[top,height,inset-inline-start,transform,box-shadow] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
@@ -592,16 +616,17 @@ function EventBlock(props: {
         className={clsx(
           'relative z-10 w-full break-words text-right transition-opacity duration-200',
           textClass,
-          canReveal ? 'line-clamp-2' : 'line-clamp-1 group-hover:opacity-0'
+          !canReveal && 'group-hover:opacity-0'
         )}
+        style={clampStyle}
       >
         {e.title}
       </span>
       {canReveal ? (
-        // The time appears right under the title on hover — same size and weight.
+        // The time takes the reserved last line, revealed on hover.
         <span
           dir="ltr"
-          className={clsx('tnum relative z-10 mt-0.5 w-full text-right opacity-0 transition-opacity duration-200 group-hover:opacity-100', textClass)}
+          className={clsx('tnum relative z-10 w-full truncate text-right opacity-0 transition-opacity duration-200 group-hover:opacity-100', textClass)}
         >
           {timeText}
         </span>
@@ -610,7 +635,7 @@ function EventBlock(props: {
         <span
           dir="ltr"
           className={clsx(
-            'tnum absolute inset-x-2.5 top-1/2 z-10 -translate-y-1/2 text-right opacity-0 transition-opacity duration-200 group-hover:opacity-100',
+            'tnum absolute inset-x-2.5 top-1/2 z-10 -translate-y-1/2 truncate text-right opacity-0 transition-opacity duration-200 group-hover:opacity-100',
             textClass
           )}
         >
