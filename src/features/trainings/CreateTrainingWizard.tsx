@@ -444,10 +444,7 @@ export function CreateTrainingWizard() {
           <div className="space-y-4">
             <p className="text-sm text-ink">{trainingsCopy.importLaterNote}</p>
             <div className="rounded-xl border border-dashed border-line bg-panel-solid/60 px-4 py-4 text-sm text-ink-muted">
-              <div className="mb-1 flex items-center gap-2 font-medium text-ink">
-                <Icon name="lock" size={15} />
-                {aiPlaceholder.title}
-              </div>
+              <div className="mb-1 font-medium text-ink">{aiPlaceholder.title}</div>
               <p className="whitespace-pre-line text-xs">{aiPlaceholder.body}</p>
             </div>
           </div>
@@ -475,7 +472,6 @@ export function CreateTrainingWizard() {
                   ])
                 }
               >
-                <Icon name="plus" size={14} />
                 {trainingsCopy.addHardEvent}
               </Button>
             </div>
@@ -552,7 +548,6 @@ export function CreateTrainingWizard() {
                   className="col-span-2"
                   onClick={() => setHardRows((rows) => rows.filter((r) => r.key !== row.key))}
                 >
-                  <Icon name="trash" size={14} />
                   {trainingsCopy.removeRow}
                 </Button>
               </div>
@@ -583,10 +578,7 @@ export function CreateTrainingWizard() {
 
         {step === 6 ? (
           <div className="space-y-3 py-4 text-center">
-            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success-soft text-success">
-              <Icon name="success" size={24} />
-            </span>
-            <p className="text-base font-medium text-ink">{trainingsCopy.created}</p>
+            <p className="text-[20px] font-semibold text-ink">{trainingsCopy.created}</p>
             {genSummary ? <p className="tnum text-sm text-ink-muted">{genSummary}</p> : null}
             <div className="flex items-center justify-center gap-2 pt-2">
               <Button

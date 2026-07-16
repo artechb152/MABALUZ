@@ -8,7 +8,6 @@ import { Badge } from '@/components/Badge'
 import { Tabs } from '@/components/Tabs'
 import { Field, Input, Select, TextArea } from '@/components/Input'
 import { Toggle } from '@/components/Toggle'
-import { Icon } from '@/assets/icons/Icon'
 import {
   approvals,
   buttons,
@@ -43,10 +42,7 @@ export function AdminPage() {
       <PageHeader
         title={nav.adminArea}
         actions={
-          <Button variant="secondary" onClick={() => navigate('/')}>
-            <Icon name="eye" size={16} />
-            {adminCopy.previewLogin}
-          </Button>
+          <Button variant="secondary" onClick={() => navigate('/')}>{adminCopy.previewLogin}</Button>
         }
       />
 
@@ -172,7 +168,7 @@ export function AdminPage() {
         <div className="max-w-2xl space-y-4">
           <EmptyState message={adminCopy.noApprovals} />
           <div className="card-tex p-5">
-            <h3 className="mb-2 text-sm font-semibold text-ink">{adminCopy.approvalExampleTitle}</h3>
+            <h3 className="mb-2 text-[18px] font-semibold text-ink">{adminCopy.approvalExampleTitle}</h3>
             <p className="whitespace-pre-line rounded-xl bg-neutral-block px-4 py-3 text-sm text-ink-muted">
               {approvals.trainingCommanderPending}
             </p>
@@ -185,7 +181,7 @@ export function AdminPage() {
       {tab === 'logs' ? (
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="card-tex p-5">
-            <h3 className="mb-3 text-sm font-semibold text-ink">{adminCopy.messagesLog}</h3>
+            <h3 className="mb-3 text-[18px] font-semibold text-ink">{adminCopy.messagesLog}</h3>
             {messages.length === 0 ? (
               <p className="py-4 text-center text-sm text-ink-muted">{emptyStates.noMessages}</p>
             ) : (
@@ -202,7 +198,7 @@ export function AdminPage() {
             )}
           </div>
           <div className="card-tex p-5">
-            <h3 className="mb-3 text-sm font-semibold text-ink">{adminCopy.notificationsLog}</h3>
+            <h3 className="mb-3 text-[18px] font-semibold text-ink">{adminCopy.notificationsLog}</h3>
             {notifications.length === 0 ? (
               <p className="py-4 text-center text-sm text-ink-muted">{emptyStates.noNotifications}</p>
             ) : (
@@ -236,8 +232,7 @@ export function AdminPage() {
             <span className="font-medium text-ink">{adminCopy.appEnv}</span>
             <Badge tone="primary">{import.meta.env.VITE_APP_ENV ?? 'dev'}</Badge>
           </div>
-          <div className="flex items-start gap-2 rounded-xl bg-neutral-block px-4 py-3 text-sm text-ink-muted">
-            <Icon name="warning" size={15} className="mt-0.5 shrink-0" />
+          <div className="rounded-xl bg-neutral-block px-4 py-3 text-[15px] text-ink-muted">
             <span className="whitespace-pre-line">{warnings.offlineEnvironment}</span>
           </div>
         </div>
@@ -291,7 +286,7 @@ function FaqEditor({ faq }: { faq: FaqItem[] }) {
                   {buttons.edit}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => void deleteFaqItem(item.id)}>
-                  <Icon name="trash" size={14} />
+                  {buttons.delete}
                 </Button>
               </div>
             </div>
@@ -299,7 +294,7 @@ function FaqEditor({ faq }: { faq: FaqItem[] }) {
       </div>
 
       <div className="glass-solid h-fit p-5">
-        <h3 className="mb-3 text-sm font-semibold text-ink">
+        <h3 className="mb-3 text-[18px] font-semibold text-ink">
           {editing ? buttons.edit : adminCopy.addFaq}
         </h3>
         <div className="space-y-3">
