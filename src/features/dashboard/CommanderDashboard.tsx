@@ -4,7 +4,7 @@ import { clsx } from 'clsx'
 import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/Button'
-import { buttons, conflictSeverityLabels, dashboards, emptyStates, nav } from '@/lib/hebrewCopy'
+import { buttons, conflictSeverityLabels, emptyStates, nav } from '@/lib/hebrewCopy'
 import {
   useCurrentUser,
   useDraftSchedule,
@@ -64,6 +64,15 @@ export function CommanderDashboard() {
     [draft, today, weekAhead]
   )
 
+  const peakDays = useMemo(
+    () =>
+      (draft?.events ?? [])
+        .filter((e) => e.type === 'PEAK_DAY' && e.date >= today && e.date <= weekAhead)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .slice(0, 5),
+    [draft, today, weekAhead]
+  )
+
   const pendingRequests = useMemo(
     () =>
       changeRequests.filter(
@@ -93,46 +102,25 @@ export function CommanderDashboard() {
   }
 
   return (
-    // Fills the viewport: the page never scrolls, the columns do.
+    // Fills the viewport: the page never scrolls, the columns/cards do.
     <div className="flex h-full flex-col">
-      {/* Greeting + training/dates on the right; soldier-view button on the left. */}
+      {/* Greeting + training name; soldier-view toggle on the left. */}
       <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="t-display">{user ? dashCopy.hello(user.firstName) : nav.dashboard}</h1>
-          <p className="mt-1 text-[16px] text-ink-muted">
-            {dashboards.currentTraining}: <span className="font-medium text-ink">{training.name}</span>
-            <span className="tnum" dir="ltr">
-              {' · '}
-              {formatDateHe(training.startDate)} — {formatDateHe(training.endDate)}
-            </span>
-          </p>
+          <p className="mt-1 text-[18px] font-medium text-ink-muted">{training.name}</p>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => setSoldierPreview(true)}>
+        {/* White by default; grey on hover (like the sidebar), indigo when pressed. */}
+        <button
+          type="button"
+          onClick={() => setSoldierPreview(true)}
+          className="focus-ring rounded-xl border border-line bg-panel-solid px-4 py-2 text-[15px] font-medium text-ink-muted shadow-sm transition-colors hover:bg-neutral-block hover:text-ink active:bg-primary-soft active:text-primary-hover"
+        >
           {buttons.soldierPreview}
-        </Button>
+        </button>
       </div>
 
-      {/* Draft status + publish. */}
-      <div
-        className={clsx(
-          'mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-4 shadow-card',
-          diverged ? 'border-warning/30 bg-warning-soft' : 'border-line bg-panel-solid'
-        )}
-      >
-        <div>
-          <span className="block text-[16px] font-semibold text-ink">{dashCopy.draftStatusTitle}</span>
-          <span className={clsx('text-[15px]', diverged ? 'text-warning' : 'text-ink-muted')}>
-            {diverged ? dashCopy.draftDiverged : dashCopy.draftSynced}
-          </span>
-        </div>
-        {diverged ? (
-          <Button variant="publish" size="sm" onClick={() => navigate('/schedule')}>
-            {buttons.publish}
-          </Button>
-        ) : null}
-      </div>
-
-      {/* Today (hero, right) + the panels (left). */}
+      {/* Today (hero, right) + the panels (left) — fills the whole height. */}
       <div className="grid min-h-0 flex-1 gap-5 xl:grid-cols-2">
         {/* Today's published schedule — plain white card. */}
         <section className="relative flex min-h-0 flex-col rounded-2xl border border-line bg-panel-solid p-6 shadow-card">
@@ -160,13 +148,16 @@ export function CommanderDashboard() {
           </div>
         </section>
 
-        {/* Left column: requests to resolve, open conflicts, closest lectures. */}
-        <div className="flex min-h-0 flex-col gap-5 overflow-y-auto pe-1">
+        {/* Left column — cards flex to fill the height. */}
+        <div className="flex min-h-0 flex-col gap-4">
+          {/* Requests to accept — a touch larger, centred. */}
           <PanelCard
             title={dashCopy.commanderRequests}
             count={pendingRequests.length}
             footerLabel={dashCopy.toShared}
             onFooter={pendingRequests.length > 0 ? () => navigate('/shared') : undefined}
+            center
+            className="flex-[1.2]"
           >
             {pendingRequests.length === 0 ? (
               <Empty text={dashCopy.noRequests} />
@@ -174,50 +165,103 @@ export function CommanderDashboard() {
               pendingRequests.map((r) => {
                 const from = trainings.find((t) => t.id === r.requestedByTrainingId)?.name ?? ''
                 return (
-                  <ListItem key={r.id}>
+                  <div key={r.id} className="text-center">
                     <span className="block text-[16px] font-medium text-ink">{r.description}</span>
                     {from ? <span className="text-[14px] text-ink-muted">{from}</span> : null}
-                  </ListItem>
+                  </div>
                 )
               })
             )}
           </PanelCard>
 
-          <PanelCard
-            title={dashCopy.openConflictsTitle}
-            count={conflicts.length}
-            footerLabel={dashCopy.toConflicts}
-            onFooter={conflicts.length > 0 ? () => navigate('/conflicts') : undefined}
-          >
-            {conflicts.length === 0 ? (
-              <Empty text={dashCopy.noOpenConflicts} />
-            ) : (
-              conflicts.slice(0, 5).map((c) => (
-                <ListItem key={c.id}>
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-[16px] font-medium text-ink">{c.title}</span>
-                    <SeverityChip severity={c.severity} />
-                  </div>
-                  {c.description ? <span className="text-[14px] text-ink-muted">{c.description}</span> : null}
-                </ListItem>
-              ))
-            )}
-          </PanelCard>
+          {/* Open conflicts (right, scrollable) + draft status (left third). */}
+          <div className="card-tex flex min-h-0 flex-[1.6] overflow-hidden !p-0">
+            <div className="flex min-h-0 flex-[2] flex-col p-5">
+              <div className="mb-3 flex shrink-0 items-center justify-between gap-2">
+                <h2 className="text-[22px] font-semibold text-ink">{dashCopy.openConflictsTitle}</h2>
+                {conflicts.length > 0 ? <CountBadge value={conflicts.length} /> : null}
+              </div>
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pe-1">
+                {conflicts.length === 0 ? (
+                  <Empty text={dashCopy.noOpenConflicts} />
+                ) : (
+                  conflicts.map((c) => (
+                    <ListItem key={c.id}>
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-[16px] font-medium text-ink">{c.title}</span>
+                        <SeverityChip severity={c.severity} />
+                      </div>
+                      {c.description ? <span className="text-[14px] text-ink-muted">{c.description}</span> : null}
+                    </ListItem>
+                  ))
+                )}
+              </div>
+              {conflicts.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/conflicts')}
+                  className="focus-ring mt-3 shrink-0 self-start rounded text-[14px] font-medium text-primary-hover hover:underline"
+                >
+                  {dashCopy.toConflicts}
+                </button>
+              ) : null}
+            </div>
 
-          <PanelCard title={dashCopy.closestLectures} footerLabel={nav.guestLecturers} onFooter={() => navigate('/lecturers')}>
+            {/* Draft status — a third, on the left, centred. */}
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 border-s border-line p-4 text-center">
+              <span className="text-[16px] font-semibold text-ink">{dashCopy.draftStatusTitle}</span>
+              <span className={clsx('text-[15px] font-medium', diverged ? 'text-warning' : 'text-success')}>
+                {diverged ? dashCopy.draftDiverged : dashCopy.draftPublished}
+              </span>
+              {diverged ? (
+                <Button variant="publish" size="sm" onClick={() => navigate('/schedule')}>
+                  {buttons.publish}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Closest lectures — centred. */}
+          <PanelCard
+            title={dashCopy.closestLectures}
+            footerLabel={nav.guestLecturers}
+            onFooter={() => navigate('/lecturers')}
+            center
+            className="flex-1"
+          >
             {lectures.length === 0 ? (
               <Empty text={emptyStates.noUpcomingLectures} />
             ) : (
               lectures.map((e) => (
-                <ListItem key={e.id}>
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-[16px] font-medium text-ink">{e.title}</span>
-                    <span className="tnum shrink-0 text-[14px] text-ink-muted" dir="ltr">
-                      {e.startTime}
-                    </span>
-                  </div>
-                  <span className="tnum text-[14px] text-ink-muted">{formatDateHe(e.date)}</span>
-                </ListItem>
+                <div key={e.id} className="text-center">
+                  <span className="block text-[16px] font-medium text-ink">{e.title}</span>
+                  <span className="tnum text-[14px] text-ink-muted" dir="ltr">
+                    {formatDateHe(e.date)} · {e.startTime}
+                  </span>
+                </div>
+              ))
+            )}
+          </PanelCard>
+
+          {/* Upcoming peak days — centred. */}
+          <PanelCard
+            title={dashCopy.upcomingPeakDays}
+            count={peakDays.length}
+            footerLabel={nav.peakDays}
+            onFooter={() => navigate('/peak-days')}
+            center
+            className="flex-1"
+          >
+            {peakDays.length === 0 ? (
+              <Empty text={dashCopy.noPeakDays} />
+            ) : (
+              peakDays.map((e) => (
+                <div key={e.id} className="text-center">
+                  <span className="block text-[16px] font-medium text-ink">{e.title}</span>
+                  <span className="tnum text-[14px] text-ink-muted" dir="ltr">
+                    {formatDateHe(e.date)}
+                  </span>
+                </div>
               ))
             )}
           </PanelCard>
@@ -233,23 +277,28 @@ function PanelCard(props: {
   children: ReactNode
   footerLabel?: string
   onFooter?: () => void
+  center?: boolean
+  className?: string
 }) {
   return (
-    <div className="card-tex p-5">
-      <div className="mb-3 flex items-center justify-between gap-2">
+    <div className={clsx('card-tex flex min-h-0 flex-col p-5', props.className)}>
+      <div className="mb-3 flex shrink-0 items-center justify-between gap-2">
         <h2 className="text-[22px] font-semibold text-ink">{props.title}</h2>
-        {typeof props.count === 'number' && props.count > 0 ? (
-          <span className="rounded-full bg-primary-soft px-2.5 py-0.5 text-[14px] font-semibold text-primary-hover">
-            {props.count}
-          </span>
-        ) : null}
+        {typeof props.count === 'number' && props.count > 0 ? <CountBadge value={props.count} /> : null}
       </div>
-      <div className="space-y-2">{props.children}</div>
+      <div
+        className={clsx(
+          'min-h-0 flex-1 overflow-y-auto',
+          props.center ? 'flex flex-col justify-center gap-2.5' : 'space-y-2'
+        )}
+      >
+        {props.children}
+      </div>
       {props.footerLabel && props.onFooter ? (
         <button
           type="button"
           onClick={props.onFooter}
-          className="focus-ring mt-3 rounded text-[14px] font-medium text-primary-hover hover:underline"
+          className="focus-ring mt-3 shrink-0 self-start rounded text-[14px] font-medium text-primary-hover hover:underline"
         >
           {props.footerLabel}
         </button>
@@ -258,12 +307,20 @@ function PanelCard(props: {
   )
 }
 
+function CountBadge({ value }: { value: number }) {
+  return (
+    <span className="shrink-0 rounded-full bg-primary-soft px-2.5 py-0.5 text-[14px] font-semibold text-primary-hover">
+      {value}
+    </span>
+  )
+}
+
 function ListItem({ children }: { children: ReactNode }) {
-  return <div className="rounded-xl border border-line bg-panel-solid/80 px-3 py-2 backdrop-blur-sm">{children}</div>
+  return <div className="rounded-xl border border-line bg-panel-solid px-3 py-2">{children}</div>
 }
 
 function Empty({ text }: { text: string }) {
-  return <p className="t-body py-3 text-center text-ink-muted">{text}</p>
+  return <p className="t-body text-center text-ink-muted">{text}</p>
 }
 
 function SeverityChip({ severity }: { severity: ConflictSeverity }) {

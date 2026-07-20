@@ -32,6 +32,9 @@ export const dashCopy = {
   openConflictsTitle: 'קונפליקטים פתוחים בטיוטה',
   noOpenConflicts: 'אין קונפליקטים פתוחים בטיוטה.',
   draftStatusTitle: 'מצב הטיוטה',
+  upcomingPeakDays: 'ימי שיא קרובים',
+  noPeakDays: 'אין ימי שיא קרובים השבוע.',
+  draftPublished: 'מפורסם ומעודכן',
   toShared: 'למרכז הלו״זים המשותפים',
   toConflicts: 'למרכז הקונפליקטים',
   toPublish: 'למעבר לפרסום'

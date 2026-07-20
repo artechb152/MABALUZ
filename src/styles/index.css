@@ -122,19 +122,15 @@ body {
     @apply rounded-2xl border border-line bg-panel-solid shadow-card;
   }
 
-  /* --- Cards: soft indigo dot-field that starts at the left edge and fades out
-     by 66% of the width (left to right). --- */
+  /* --- Cards: soft indigo dot-field across the whole card. --- */
   .card-tex {
     @apply relative overflow-hidden rounded-2xl border border-line bg-panel-solid shadow-card;
   }
   .card-tex::before {
     content: '';
     @apply pointer-events-none absolute inset-0;
-    background-image: radial-gradient(rgba(79, 70, 229, 0.11) 1.5px, transparent 1.8px);
+    background-image: radial-gradient(rgba(79, 70, 229, 0.1) 1.5px, transparent 1.8px);
     background-size: 15px 15px;
-    background-position: left center;
-    -webkit-mask-image: linear-gradient(to right, #000 0%, transparent 66%);
-    mask-image: linear-gradient(to right, #000 0%, transparent 66%);
   }
   .card-tex > * {
     position: relative;
