@@ -22,6 +22,11 @@ import type { ConflictSeverity, LectureConfirmationStatus, ScheduleEvent } from 
 import { TodayBlock } from './TodayBlock'
 import { dashCopy } from './copy'
 
+// Shared "chrome" button: same look as the soldier-view toggle (white, grey on
+// hover, indigo when pressed). Reused so those buttons stay pixel-identical.
+const chromeButtonClass =
+  'focus-ring rounded-xl border border-line bg-panel-solid px-4 py-2 text-[15px] font-medium text-ink-muted shadow-sm transition-colors hover:bg-neutral-block hover:text-ink active:bg-primary-soft active:text-primary-hover'
+
 export function CommanderDashboard() {
   const navigate = useNavigate()
   const user = useCurrentUser()
@@ -86,9 +91,6 @@ export function CommanderDashboard() {
     )
   }, [draft, published])
 
-  const blocking = conflicts.filter((c) => c.severity === 'BLOCKING').length
-  const warning = conflicts.length - blocking
-
   if (!training) {
     return (
       <div>
@@ -107,12 +109,7 @@ export function CommanderDashboard() {
           <h1 className="t-display">{user ? dashCopy.hello(user.firstName) : nav.dashboard}</h1>
           <p className="mt-1 text-[18px] font-medium text-ink-muted">{training.name}</p>
         </div>
-        {/* White by default; grey on hover (like the sidebar), indigo when pressed. */}
-        <button
-          type="button"
-          onClick={() => setSoldierPreview(true)}
-          className="focus-ring rounded-xl border border-line bg-panel-solid px-4 py-2 text-[15px] font-medium text-ink-muted shadow-sm transition-colors hover:bg-neutral-block hover:text-ink active:bg-primary-soft active:text-primary-hover"
-        >
+        <button type="button" onClick={() => setSoldierPreview(true)} className={chromeButtonClass}>
           {buttons.soldierPreview}
         </button>
       </div>
@@ -140,10 +137,12 @@ export function CommanderDashboard() {
           </div>
         </section>
 
-        {/* Left column — requests / conflicts+draft / lectures. */}
-        <div className="flex min-h-0 flex-col gap-4">
+        {/* Left column — requests / conflicts+draft / lectures. Cards keep a
+            min-height that fits their content (never clipped); the column
+            scrolls if the viewport is too short to grow them all. */}
+        <div className="no-scrollbar flex min-h-0 flex-col gap-4 overflow-y-auto">
           {/* Requests to accept — centred, same size as lectures. */}
-          <DashCard title={dashCopy.commanderRequests} info={dashCopy.infoRequests} className="flex-[1.2]">
+          <DashCard title={dashCopy.commanderRequests} info={dashCopy.infoRequests} className="min-h-[190px] flex-1">
             {pendingRequests.length === 0 ? (
               <Centered>
                 <Empty text={dashCopy.noRequests} />
@@ -187,13 +186,10 @@ export function CommanderDashboard() {
           </DashCard>
 
           {/* Open conflicts (swipe deck) + draft-status inset panel. */}
-          <div className="card-tex flex min-h-0 flex-[1.8] flex-col p-5">
+          <div className="card-tex flex min-h-[248px] flex-[1.6] flex-col p-5">
             <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
               <h2 className="text-[22px] font-semibold text-ink">{dashCopy.openConflictsTitle}</h2>
-              <div className="flex shrink-0 items-center gap-2">
-                <ConflictCount blocking={blocking} warning={warning} />
-                <InfoTip text={dashCopy.infoConflicts} />
-              </div>
+              <InfoTip text={dashCopy.infoConflicts} />
             </div>
             <div className="flex min-h-0 flex-1 gap-4">
               {/* Conflicts — one at a time, swipeable (right). */}
@@ -232,16 +228,16 @@ export function CommanderDashboard() {
                   {diverged ? dashCopy.draftDiverged : dashCopy.draftPublished}
                 </span>
                 {diverged ? (
-                  <Button variant="primary" size="sm" onClick={() => navigate('/schedule')}>
+                  <button type="button" onClick={() => navigate('/schedule')} className={chromeButtonClass}>
                     {dashCopy.viewChanges}
-                  </Button>
+                  </button>
                 ) : null}
               </div>
             </div>
           </div>
 
           {/* Closest lectures — one at a time, swipeable, with confirmation status. */}
-          <DashCard title={dashCopy.closestLectures} info={dashCopy.infoLectures} className="flex-[1.2]">
+          <DashCard title={dashCopy.closestLectures} info={dashCopy.infoLectures} className="min-h-[176px] flex-1">
             {lectures.length === 0 ? (
               <Centered>
                 <Empty text={emptyStates.noUpcomingLectures} />
@@ -326,7 +322,7 @@ function InfoTip({ text }: { text: string }) {
 
 function DashCard(props: { title: string; info: string; className?: string; children: ReactNode }) {
   return (
-    <div className={clsx('card-tex flex min-h-0 flex-col p-5', props.className)}>
+    <div className={clsx('card-tex flex flex-col p-5', props.className)}>
       <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
         <h2 className="text-[22px] font-semibold text-ink">{props.title}</h2>
         <InfoTip text={props.info} />
@@ -338,14 +334,17 @@ function DashCard(props: { title: string; info: string; className?: string; chil
 
 /**
  * Single-item deck: shows one entry; drag it or use the side buttons to page.
- * The right button and a rightward drag both go forward (RTL-natural); the drag
- * has velocity-based flicks, rubber-band resistance at the ends, and a spring
- * settle so it feels physical rather than mechanical.
+ * In RTL the left control (and a leftward drag) go forward to the next item;
+ * the right control goes back. Each swap slides in from the side opposite the
+ * one it left toward, so paging reads like items running along a rail. The drag
+ * has velocity flicks, rubber-band resistance at the ends, and a spring settle.
  */
 function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T) => ReactNode }) {
   const [index, setIndex] = useState(0)
+  const [dir, setDir] = useState(1)
   const [dragX, setDragX] = useState(0)
   const [dragging, setDragging] = useState(false)
+  const [snapping, setSnapping] = useState(false)
   const startX = useRef<number | null>(null)
   const lastX = useRef(0)
   const lastT = useRef(0)
@@ -356,8 +355,14 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
   const atStart = clamped === 0
   const atEnd = clamped === count - 1
 
+  // dir: +1 = forward (to a later item), -1 = back.
   const go = useCallback(
-    (dir: number) => setIndex((i) => Math.min(Math.max(0, Math.min(i, count - 1) + dir), count - 1)),
+    (d: number) => {
+      setDir(d)
+      setSnapping(false)
+      setDragX(0)
+      setIndex((i) => Math.min(Math.max(0, Math.min(i, count - 1) + d), count - 1))
+    },
     [count]
   )
 
@@ -384,20 +389,26 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
     const v = velocity.current
     startX.current = null
     setDragging(false)
-    setDragX(0)
     const flick = Math.abs(v) > 0.4
     if (Math.abs(dx) > 8 && (Math.abs(dx) > 56 || flick)) {
-      go((flick ? v : dx) > 0 ? 1 : -1) // rightward -> next (later)
+      go((flick ? v : dx) < 0 ? 1 : -1) // leftward -> forward (next)
+    } else {
+      // Did not cross the threshold: spring back to centre.
+      setSnapping(true)
+      setDragX(0)
     }
   }
 
   // Resist dragging past the first/last item so the ends feel bounded.
-  const resisted = (dragX > 0 && atEnd) || (dragX < 0 && atStart) ? dragX * 0.3 : dragX
+  const blocked = (dragX < 0 && atEnd) || (dragX > 0 && atStart)
+  const resisted = blocked ? dragX * 0.3 : dragX
+  // Forward enters from the right (opposite the leftward exit); back from the left.
+  const enter = dir >= 0 ? 'deckInRight' : 'deckInLeft'
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex min-h-0 flex-1 items-stretch gap-2">
-        {count > 1 ? <DeckButton chevron="›" disabled={atEnd} onClick={() => go(1)} /> : null}
+        {count > 1 ? <DeckButton chevron="›" disabled={atStart} onClick={() => go(-1)} /> : null}
         <div
           className={clsx(
             'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden',
@@ -412,17 +423,17 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
             className="w-full px-2 text-center"
             style={{
               transform: `translateX(${resisted}px) scale(${dragging ? 0.985 : 1})`,
-              transition: dragging ? 'none' : 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
+              transition: dragging || !snapping ? 'none' : 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
               opacity: 1 - Math.min(Math.abs(resisted) / 340, 0.4),
               willChange: 'transform'
             }}
           >
-            <div key={clamped} style={{ animation: 'deckIn 0.28s cubic-bezier(0.22, 1, 0.36, 1)' }}>
+            <div key={clamped} style={{ animation: `${enter} 0.3s cubic-bezier(0.22, 1, 0.36, 1)` }}>
               {renderItem(items[clamped])}
             </div>
           </div>
         </div>
-        {count > 1 ? <DeckButton chevron="‹" disabled={atStart} onClick={() => go(-1)} /> : null}
+        {count > 1 ? <DeckButton chevron="‹" disabled={atEnd} onClick={() => go(1)} /> : null}
       </div>
       {count > 1 ? (
         <div className="mt-2 flex shrink-0 items-center justify-center">
@@ -444,7 +455,7 @@ function DeckButton({ chevron, disabled, onClick }: { chevron: string; disabled:
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center self-center rounded-full border border-line bg-panel-solid text-[17px] leading-none text-ink-muted shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary-soft hover:text-primary-hover hover:shadow-card active:scale-90 disabled:pointer-events-none disabled:opacity-30"
+      className="week-nav-btn shrink-0 self-center text-[17px] leading-none"
     >
       {chevron}
     </button>
@@ -453,24 +464,6 @@ function DeckButton({ chevron, disabled, onClick }: { chevron: string; disabled:
 
 function Centered({ children }: { children: ReactNode }) {
   return <div className="flex min-h-0 flex-1 items-center justify-center">{children}</div>
-}
-
-function ConflictCount({ blocking, warning }: { blocking: number; warning: number }) {
-  if (blocking + warning === 0) return null
-  return (
-    <div className="flex items-center gap-1.5 text-[13px] font-semibold">
-      {blocking > 0 ? (
-        <span className="rounded-md bg-danger-soft px-2 py-0.5 text-danger">
-          {blocking} {dashCopy.conflictsBlocking}
-        </span>
-      ) : null}
-      {warning > 0 ? (
-        <span className="rounded-md bg-warning-soft px-2 py-0.5 text-warning">
-          {warning} {dashCopy.conflictsWarning}
-        </span>
-      ) : null}
-    </div>
-  )
 }
 
 function Empty({ text }: { text: string }) {
