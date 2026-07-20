@@ -4,8 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { clsx } from 'clsx'
 import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
-import { Button } from '@/components/Button'
-import { buttons, confirmationStatusLabels, emptyStates, nav } from '@/lib/hebrewCopy'
+import { buttons, confirmationStatusLabels, emptyStates, hebrewMonths, nav } from '@/lib/hebrewCopy'
 import {
   useCurrentUser,
   useDraftSchedule,
@@ -15,7 +14,7 @@ import {
 import { useDb } from '@/app/dbStore'
 import { useNow } from '@/app/useNow'
 import { useSession } from '@/app/sessionStore'
-import { addDaysISO, formatDateHe, todayISO, toMinutes } from '@/lib/time'
+import { addDaysISO, todayISO, toMinutes } from '@/lib/time'
 import { detectConflicts } from '@/features/scheduling-engine'
 import type { LectureConfirmationStatus, ScheduleEvent } from '@/types'
 import { TodayBlock } from './TodayBlock'
@@ -155,9 +154,9 @@ export function CommanderDashboard() {
                       {dashCopy.morePending(pendingRequests.length - 1)}
                     </span>
                   ) : null}
-                  <Button variant="primary" size="sm" onClick={() => navigate('/confirmations')}>
+                  <button type="button" onClick={() => navigate('/confirmations')} className={chromeButtonClass}>
                     {dashCopy.handleRequests}
-                  </Button>
+                  </button>
                 </div>
               )}
             </Centered>
@@ -223,22 +222,32 @@ export function CommanderDashboard() {
                 renderItem={(e) => {
                   const details = lectureDetails.find((d) => d.eventId === e.id || `${d.eventId}-d` === e.id)
                   const lecturer = details ? lecturers.find((l) => l.id === details.lecturerId) : undefined
+                  const subtitle = lecturer
+                    ? [lecturer.fullName, lecturer.organization].filter(Boolean).join(' · ')
+                    : (e.instructorName ?? '')
                   return (
-                    <div className="mx-auto w-full max-w-sm rounded-2xl border border-line bg-panel-solid p-4 text-start shadow-sm">
-                      <p className="text-[16px] font-semibold leading-snug text-ink">{e.title}</p>
-                      {lecturer ? (
-                        <p className="mt-0.5 truncate text-[13px] text-ink-muted">
-                          {lecturer.fullName}
-                          {lecturer.organization ? ` · ${lecturer.organization}` : ''}
-                        </p>
-                      ) : e.instructorName ? (
-                        <p className="mt-0.5 truncate text-[13px] text-ink-muted">{e.instructorName}</p>
-                      ) : null}
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-2.5">
-                        <span className="tnum text-[13px] font-medium text-ink" dir="ltr">
-                          {formatDateHe(e.date)} · {e.startTime}–{e.endTime}
+                    <div className="mx-auto flex w-full max-w-sm items-stretch gap-3 rounded-2xl border border-line bg-panel-solid p-3 text-start shadow-sm">
+                      {/* Date badge */}
+                      <div className="flex w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-primary-soft py-2 text-primary-hover">
+                        <span className="tnum text-[22px] font-bold leading-none">
+                          {Number.parseInt(e.date.slice(8, 10), 10)}
                         </span>
-                        {details ? <StatusChip status={details.confirmationStatus} /> : null}
+                        <span className="mt-0.5 text-[10px] font-medium leading-none">
+                          {hebrewMonths[Number.parseInt(e.date.slice(5, 7), 10) - 1]}
+                        </span>
+                      </div>
+                      {/* Details */}
+                      <div className="flex min-w-0 flex-1 flex-col justify-center">
+                        <p className="truncate text-[15px] font-semibold leading-snug text-ink">{e.title}</p>
+                        {subtitle ? (
+                          <p className="mt-0.5 truncate text-[12px] text-ink-muted">{subtitle}</p>
+                        ) : null}
+                        <div className="mt-1.5 flex items-center gap-2">
+                          <span className="tnum text-[12px] font-medium text-ink-muted" dir="ltr">
+                            {e.startTime}–{e.endTime}
+                          </span>
+                          {details ? <StatusChip status={details.confirmationStatus} /> : null}
+                        </div>
                       </div>
                     </div>
                   )
@@ -395,53 +404,48 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex min-h-0 flex-1 items-stretch gap-2">
-        {count > 1 ? <DeckButton chevron=">" disabled={atEnd} onClick={() => go(1, true)} /> : null}
+      <div
+        className={clsx(
+          'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden',
+          count > 1 && 'cursor-grab touch-none select-none active:cursor-grabbing'
+        )}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={onUp}
+      >
         <div
-          className={clsx(
-            'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden',
-            count > 1 && 'cursor-grab touch-none select-none active:cursor-grabbing'
-          )}
-          onPointerDown={onDown}
-          onPointerMove={onMove}
-          onPointerUp={onUp}
-          onPointerCancel={onUp}
+          className="w-full px-2 text-center"
+          style={{
+            transform: `translateX(${resisted}px) scale(${dragging ? 0.985 : 1})`,
+            transition: dragging || !snapping ? 'none' : 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
+            opacity: 1 - Math.min(Math.abs(resisted) / 340, 0.4),
+            willChange: 'transform'
+          }}
         >
-          <div
-            className="w-full px-2 text-center"
-            style={{
-              transform: `translateX(${resisted}px) scale(${dragging ? 0.985 : 1})`,
-              transition: dragging || !snapping ? 'none' : 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
-              opacity: 1 - Math.min(Math.abs(resisted) / 340, 0.4),
-              willChange: 'transform'
-            }}
-          >
-            <div key={clamped} style={{ animation: `${enter} 0.42s cubic-bezier(0.22, 1, 0.36, 1)` }}>
-              {renderItem(items[clamped])}
-            </div>
+          <div key={clamped} style={{ animation: `${enter} 0.42s cubic-bezier(0.22, 1, 0.36, 1)` }}>
+            {renderItem(items[clamped])}
           </div>
         </div>
-        {count > 1 ? <DeckButton chevron="<" disabled={atStart} onClick={() => go(-1, false)} /> : null}
       </div>
+      {/* Pagination dots: click a dot to jump; active dot stretches into a pill. */}
       {count > 1 ? (
-        <div className="mt-2 flex shrink-0 items-center justify-center">
-          <span
-            className="tnum rounded-full bg-neutral-block px-2.5 py-0.5 text-[12px] font-semibold text-ink-muted"
-            dir="ltr"
-          >
-            {clamped + 1} / {count}
-          </span>
+        <div className="mt-3 flex shrink-0 items-center justify-center gap-1.5">
+          {items.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              aria-label={`${i + 1}`}
+              onClick={() => go(i - clamped, i > clamped)}
+              className={clsx(
+                'h-2 rounded-full transition-all duration-300',
+                i === clamped ? 'w-5 bg-primary' : 'w-2 bg-line hover:bg-ink-muted'
+              )}
+            />
+          ))}
         </div>
       ) : null}
     </div>
-  )
-}
-
-function DeckButton({ chevron, disabled, onClick }: { chevron: string; disabled: boolean; onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick} disabled={disabled} className="week-nav-btn shrink-0 self-center">
-      <span className="block text-[24px] font-semibold leading-none">{chevron}</span>
-    </button>
   )
 }
 

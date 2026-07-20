@@ -106,6 +106,21 @@ export const nav = {
   confirmations: 'אישורי שינויים'
 } as const
 
+export const hebrewMonths = [
+  'ינואר',
+  'פברואר',
+  'מרץ',
+  'אפריל',
+  'מאי',
+  'יוני',
+  'יולי',
+  'אוגוסט',
+  'ספטמבר',
+  'אוקטובר',
+  'נובמבר',
+  'דצמבר'
+] as const
+
 export const changeReview = {
   title: 'אישור בקשת שינוי',
   subtitleList: 'בקשות שינוי בלו״זים משותפים הממתינות לאישורך',
