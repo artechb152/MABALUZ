@@ -215,13 +215,13 @@ export function AppShell() {
         {/* Content-aligned region: the training picker's right edge sits at the
             content column's right edge (level with the dashboard greeting). The
             soldier-view toggle sits just to its left. */}
-        <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-stretch gap-3">
           {effectiveRole !== 'SOLDIER' ? <TrainingPicker /> : null}
           {effectiveRole !== 'SOLDIER' && effectiveRole !== 'ADMIN' && !soldierPreview ? (
             <button
               type="button"
               onClick={() => setSoldierPreview(true)}
-              className="focus-ring rounded-xl border border-line bg-panel-solid px-4 py-2 text-[15px] font-medium text-ink-muted shadow-sm transition-colors hover:bg-neutral-block hover:text-ink active:bg-primary-soft active:text-primary-hover"
+              className="focus-ring flex items-center justify-center rounded-xl border border-line bg-panel-solid px-4 text-[15px] font-medium text-ink-muted shadow-sm transition-colors hover:bg-neutral-block hover:text-ink active:bg-primary-soft active:text-primary-hover"
             >
               {buttons.soldierPreview}
             </button>

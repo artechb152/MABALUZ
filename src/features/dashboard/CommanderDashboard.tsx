@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { clsx } from 'clsx'
 import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
+import { Icon } from '@/assets/icons/Icon'
 import { confirmationStatusLabels, emptyStates, hebrewMonths, nav } from '@/lib/hebrewCopy'
 import {
   useCurrentUser,
@@ -88,7 +89,6 @@ export function CommanderDashboard() {
 
   const blocking = conflicts.filter((c) => c.severity === 'BLOCKING').length
   const warning = conflicts.filter((c) => c.severity === 'WARNING').length
-  const info = conflicts.filter((c) => c.severity === 'INFO').length
 
   // Whole draft-status card: green = clean & published, orange = unpublished
   // changes, red = unresolved blocking conflicts.
@@ -176,14 +176,11 @@ export function CommanderDashboard() {
                 <CountPill count={conflicts.length} />
                 <h2 className="text-[22px] font-semibold text-ink">{dashCopy.openConflictsTitle}</h2>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <ConflictCounts blocking={blocking} warning={warning} info={info} />
-                <InfoTip text={dashCopy.infoConflicts} />
-              </div>
+              <InfoTip text={dashCopy.infoConflicts} />
             </div>
-            <div className="flex min-h-0 flex-1 gap-4">
-              {/* Conflicts — one at a time, swipeable (right). */}
-              <div className="flex min-h-0 flex-[2] flex-col">
+            <div className="flex min-h-0 flex-1 gap-5">
+              {/* Conflicts — one at a time, swipeable. */}
+              <div className="flex min-h-0 flex-[1.7] flex-col">
                 {conflicts.length === 0 ? (
                   <Centered>
                     <Empty text={dashCopy.noOpenConflicts} />
@@ -203,24 +200,35 @@ export function CommanderDashboard() {
                 )}
               </div>
 
-              {/* Draft status — the whole panel takes the state colour:
-                  green = clean, orange = unpublished changes, red = blocked. */}
+              {/* Draft status — soft state colour fills the whole block; the
+                  severity counts sit inside as thin red/orange chips. */}
               <div
                 className={clsx(
-                  'flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border p-4 text-center transition-colors',
+                  'flex flex-1 flex-col items-center justify-center gap-2.5 rounded-2xl p-4 text-center transition-colors',
                   DRAFT_STATE[draftState].panel
                 )}
               >
                 <span className={clsx('text-[15px] font-semibold', DRAFT_STATE[draftState].text)}>
                   {dashCopy.draftStatusTitle}
                 </span>
-                <span className={clsx('text-[13px] font-medium', DRAFT_STATE[draftState].text)}>
-                  {draftState === 'blocked'
-                    ? dashCopy.draftBlocked
-                    : draftState === 'unstaged'
-                      ? dashCopy.draftDiverged
-                      : dashCopy.draftPublished}
-                </span>
+                {blocking > 0 || warning > 0 ? (
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {blocking > 0 ? (
+                      <span className="tnum rounded-lg border border-danger/50 bg-panel-solid/60 px-2.5 py-1 text-[12px] font-semibold text-danger">
+                        {blocking} {dashCopy.conflictsBlocking}
+                      </span>
+                    ) : null}
+                    {warning > 0 ? (
+                      <span className="tnum rounded-lg border border-warning/50 bg-panel-solid/60 px-2.5 py-1 text-[12px] font-semibold text-warning">
+                        {warning} {dashCopy.conflictsWarning}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : (
+                  <span className={clsx('text-[13px] font-medium', DRAFT_STATE[draftState].text)}>
+                    {draftState === 'unstaged' ? dashCopy.draftDiverged : dashCopy.draftPublished}
+                  </span>
+                )}
                 {draftState !== 'ok' ? (
                   <button type="button" onClick={() => navigate('/schedule')} className={chromeButtonClass}>
                     {draftState === 'blocked' ? dashCopy.resolveConflicts : dashCopy.viewChanges}
@@ -366,32 +374,11 @@ function CountPill({ count }: { count: number }) {
   )
 }
 
-/** Per-severity conflict counts — a calm coloured-dot + count line. */
-function ConflictCounts({ blocking, warning, info }: { blocking: number; warning: number; info: number }) {
-  if (blocking + warning + info === 0) return null
-  const parts: { n: number; dot: string; label: string }[] = [
-    { n: blocking, dot: 'bg-danger', label: dashCopy.conflictsBlocking },
-    { n: warning, dot: 'bg-warning', label: dashCopy.conflictsWarning },
-    { n: info, dot: 'bg-ink-muted', label: dashCopy.conflictsInfo }
-  ].filter((p) => p.n > 0)
-  return (
-    <div className="flex items-center gap-3 text-[13px] text-ink-muted">
-      {parts.map((p) => (
-        <span key={p.label} className="flex items-center gap-1.5">
-          <span className={clsx('h-2 w-2 rounded-full', p.dot)} />
-          <span className="font-semibold text-ink">{p.n}</span>
-          {p.label}
-        </span>
-      ))}
-    </div>
-  )
-}
-
-// Draft-status palette: the whole panel takes the colour of the current state.
+// Draft-status palette: the whole block takes the colour of the current state.
 const DRAFT_STATE = {
-  ok: { panel: 'border-success/30 bg-success-soft', text: 'text-success' },
-  unstaged: { panel: 'border-warning/30 bg-warning-soft', text: 'text-warning' },
-  blocked: { panel: 'border-danger/30 bg-danger-soft', text: 'text-danger' }
+  ok: { panel: 'bg-success-soft', text: 'text-success' },
+  unstaged: { panel: 'bg-warning-soft', text: 'text-warning' },
+  blocked: { panel: 'bg-danger-soft', text: 'text-danger' }
 } as const
 
 /**
@@ -453,9 +440,10 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
     setDragging(false)
     const flick = Math.abs(v) > 0.4
     if (Math.abs(dx) > 8 && (Math.abs(dx) > 56 || flick)) {
-      // Rightward swipe advances (next, in from the right); leftward goes back.
-      if ((flick ? v : dx) > 0) go(1, true)
-      else go(-1, false)
+      // Gallery convention: drag right -> previous card slides in from the left;
+      // drag left -> next card slides in from the right.
+      if ((flick ? v : dx) > 0) go(-1, false)
+      else go(1, true)
     } else {
       // Did not cross the threshold: spring back to centre.
       setSnapping(true)
@@ -464,7 +452,7 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
   }
 
   // Resist dragging past the first/last item so the ends feel bounded.
-  const blocked = (dragX > 0 && atEnd) || (dragX < 0 && atStart)
+  const blocked = (dragX > 0 && atStart) || (dragX < 0 && atEnd)
   const resisted = blocked ? dragX * 0.3 : dragX
   const enter = enterRight ? 'deckInRight' : 'deckInLeft'
 
@@ -496,8 +484,8 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
       </div>
       {/* Bottom bar: prev button, pagination dots, next button (left-to-right). */}
       {count > 1 ? (
-        <div dir="ltr" className="mt-3 flex shrink-0 items-center justify-center gap-3">
-          <DeckNavButton glyph="<" disabled={atStart} onClick={() => go(-1, false)} />
+        <div dir="ltr" className="mt-3 flex shrink-0 items-center justify-center gap-2.5">
+          <DeckNavButton dir="prev" disabled={atStart} onClick={() => go(-1, false)} />
           <div className="flex items-center gap-1.5">
             {items.map((_, i) => (
               <button
@@ -512,22 +500,23 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
               />
             ))}
           </div>
-          <DeckNavButton glyph=">" disabled={atEnd} onClick={() => go(1, true)} />
+          <DeckNavButton dir="next" disabled={atEnd} onClick={() => go(1, true)} />
         </div>
       ) : null}
     </div>
   )
 }
 
-function DeckNavButton({ glyph, disabled, onClick }: { glyph: string; disabled: boolean; onClick: () => void }) {
+function DeckNavButton({ dir, disabled, onClick }: { dir: 'prev' | 'next'; disabled: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="focus-ring flex h-7 w-7 items-center justify-center rounded-full border border-line bg-panel-solid text-[15px] font-semibold leading-none text-ink-muted shadow-sm transition-colors hover:bg-neutral-block hover:text-ink disabled:opacity-30 disabled:hover:bg-panel-solid disabled:hover:text-ink-muted"
+      aria-label={dir}
+      className="focus-ring flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-neutral-block hover:text-ink disabled:pointer-events-none disabled:opacity-25"
     >
-      {glyph}
+      <Icon name="chevron-down" size={18} className={dir === 'prev' ? 'rotate-90' : '-rotate-90'} />
     </button>
   )
 }
