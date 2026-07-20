@@ -122,7 +122,7 @@ export function CommanderDashboard() {
             <h2 className="t-display text-[22px]">{dashCopy.todaySchedule}</h2>
             <InfoTip text={dashCopy.infoToday} />
           </header>
-          <div className="no-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto px-2 py-2">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-2 py-2">
             {todayEvents.length === 0 ? (
               <p className="t-body py-10 text-center text-ink-muted">{dashCopy.nothingToday}</p>
             ) : (
@@ -142,7 +142,7 @@ export function CommanderDashboard() {
             scrolls if the viewport is too short to grow them all. */}
         <div className="no-scrollbar flex min-h-0 flex-col gap-4 overflow-y-auto">
           {/* Requests to accept — centred, same size as lectures. */}
-          <DashCard title={dashCopy.commanderRequests} info={dashCopy.infoRequests} className="min-h-[190px] flex-1">
+          <DashCard title={dashCopy.commanderRequests} info={dashCopy.infoRequests} className="min-h-[168px] flex-1">
             {pendingRequests.length === 0 ? (
               <Centered>
                 <Empty text={dashCopy.noRequests} />
@@ -186,7 +186,7 @@ export function CommanderDashboard() {
           </DashCard>
 
           {/* Open conflicts (swipe deck) + draft-status inset panel. */}
-          <div className="card-tex flex min-h-[248px] flex-[1.6] flex-col p-5">
+          <div className="card-tex flex min-h-[196px] flex-[1.4] flex-col p-5">
             <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
               <h2 className="text-[22px] font-semibold text-ink">{dashCopy.openConflictsTitle}</h2>
               <InfoTip text={dashCopy.infoConflicts} />
@@ -202,15 +202,15 @@ export function CommanderDashboard() {
                   <SwipeDeck
                     items={conflicts}
                     renderItem={(c) => (
-                      <>
+                      <div className="mx-auto w-full max-w-md rounded-xl border border-line bg-panel-solid px-4 py-3 shadow-sm">
                         <div className="mb-1.5 flex flex-wrap items-center justify-center gap-2">
-                          <span className="text-[17px] font-medium text-ink">{c.title}</span>
+                          <span className="text-[16px] font-medium text-ink">{c.title}</span>
                           <SeverityChip severity={c.severity} />
                         </div>
                         {c.description ? (
-                          <p className="mx-auto max-w-md text-[14px] leading-relaxed text-ink-muted">{c.description}</p>
+                          <p className="text-[13px] leading-relaxed text-ink-muted">{c.description}</p>
                         ) : null}
-                      </>
+                      </div>
                     )}
                   />
                 )}
@@ -237,7 +237,7 @@ export function CommanderDashboard() {
           </div>
 
           {/* Closest lectures — one at a time, swipeable, with confirmation status. */}
-          <DashCard title={dashCopy.closestLectures} info={dashCopy.infoLectures} className="min-h-[176px] flex-1">
+          <DashCard title={dashCopy.closestLectures} info={dashCopy.infoLectures} className="min-h-[148px] flex-1">
             {lectures.length === 0 ? (
               <Centered>
                 <Empty text={emptyStates.noUpcomingLectures} />
@@ -341,7 +341,7 @@ function DashCard(props: { title: string; info: string; className?: string; chil
  */
 function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T) => ReactNode }) {
   const [index, setIndex] = useState(0)
-  const [dir, setDir] = useState(1)
+  const [enterRight, setEnterRight] = useState(true)
   const [dragX, setDragX] = useState(0)
   const [dragging, setDragging] = useState(false)
   const [snapping, setSnapping] = useState(false)
@@ -355,13 +355,14 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
   const atStart = clamped === 0
   const atEnd = clamped === count - 1
 
-  // dir: +1 = forward (to a later item), -1 = back.
+  // fromRight: the new card slides in from the right (used by the right-side
+  // control and a leftward swipe); false slides it in from the left.
   const go = useCallback(
-    (d: number) => {
-      setDir(d)
+    (delta: number, fromRight: boolean) => {
+      setEnterRight(fromRight)
       setSnapping(false)
       setDragX(0)
-      setIndex((i) => Math.min(Math.max(0, Math.min(i, count - 1) + d), count - 1))
+      setIndex((i) => Math.min(Math.max(0, Math.min(i, count - 1) + delta), count - 1))
     },
     [count]
   )
@@ -391,7 +392,9 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
     setDragging(false)
     const flick = Math.abs(v) > 0.4
     if (Math.abs(dx) > 8 && (Math.abs(dx) > 56 || flick)) {
-      go((flick ? v : dx) < 0 ? 1 : -1) // leftward -> forward (next)
+      // Leftward swipe advances and pulls the next card in from the right.
+      if ((flick ? v : dx) < 0) go(1, true)
+      else go(-1, false)
     } else {
       // Did not cross the threshold: spring back to centre.
       setSnapping(true)
@@ -402,13 +405,12 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
   // Resist dragging past the first/last item so the ends feel bounded.
   const blocked = (dragX < 0 && atEnd) || (dragX > 0 && atStart)
   const resisted = blocked ? dragX * 0.3 : dragX
-  // Forward enters from the right (opposite the leftward exit); back from the left.
-  const enter = dir >= 0 ? 'deckInRight' : 'deckInLeft'
+  const enter = enterRight ? 'deckInRight' : 'deckInLeft'
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex min-h-0 flex-1 items-stretch gap-2">
-        {count > 1 ? <DeckButton chevron="›" disabled={atStart} onClick={() => go(-1)} /> : null}
+        {count > 1 ? <DeckButton chevron="›" disabled={atEnd} onClick={() => go(1, true)} /> : null}
         <div
           className={clsx(
             'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden',
@@ -433,7 +435,7 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
             </div>
           </div>
         </div>
-        {count > 1 ? <DeckButton chevron="‹" disabled={atEnd} onClick={() => go(1)} /> : null}
+        {count > 1 ? <DeckButton chevron="‹" disabled={atStart} onClick={() => go(-1, false)} /> : null}
       </div>
       {count > 1 ? (
         <div className="mt-2 flex shrink-0 items-center justify-center">
@@ -451,13 +453,8 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
 
 function DeckButton({ chevron, disabled, onClick }: { chevron: string; disabled: boolean; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="week-nav-btn shrink-0 self-center text-[17px] leading-none"
-    >
-      {chevron}
+    <button type="button" onClick={onClick} disabled={disabled} className="week-nav-btn shrink-0 self-center">
+      <span className="block text-[24px] font-semibold leading-none">{chevron}</span>
     </button>
   )
 }
