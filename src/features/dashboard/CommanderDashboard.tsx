@@ -4,7 +4,7 @@ import { clsx } from 'clsx'
 import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/Button'
-import { buttons, conflictSeverityLabels, emptyStates, nav } from '@/lib/hebrewCopy'
+import { buttons, confirmationStatusLabels, conflictSeverityLabels, emptyStates, nav } from '@/lib/hebrewCopy'
 import {
   useCurrentUser,
   useDraftSchedule,
@@ -16,7 +16,8 @@ import { useNow } from '@/app/useNow'
 import { useSession } from '@/app/sessionStore'
 import { addDaysISO, formatDateHe, todayISO, toMinutes } from '@/lib/time'
 import { detectConflicts } from '@/features/scheduling-engine'
-import type { ConflictSeverity, ScheduleEvent } from '@/types'
+import { decideOnChange } from '@/data/services/sharedEventService'
+import type { ConflictSeverity, LectureConfirmationStatus, ScheduleEvent } from '@/types'
 import { TodayBlock } from './TodayBlock'
 import { dashCopy } from './copy'
 
@@ -29,6 +30,7 @@ export function CommanderDashboard() {
   const changeRequests = useDb((s) => s.changeRequests)
   const lecturers = useDb((s) => s.lecturers)
   const trainings = useDb((s) => s.trainings)
+  const lectureDetails = useDb((s) => s.guestLectureDetails)
   const setSoldierPreview = useSession((s) => s.setSoldierPreview)
   const now = useNow()
 
@@ -64,15 +66,6 @@ export function CommanderDashboard() {
     [draft, today, weekAhead]
   )
 
-  const peakDays = useMemo(
-    () =>
-      (draft?.events ?? [])
-        .filter((e) => e.type === 'PEAK_DAY' && e.date >= today && e.date <= weekAhead)
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .slice(0, 5),
-    [draft, today, weekAhead]
-  )
-
   const pendingRequests = useMemo(
     () =>
       changeRequests.filter(
@@ -91,6 +84,9 @@ export function CommanderDashboard() {
       draft.events.map(key).sort().join() !== published.events.map(key).sort().join()
     )
   }, [draft, published])
+
+  const blocking = conflicts.filter((c) => c.severity === 'BLOCKING').length
+  const warning = conflicts.length - blocking
 
   if (!training) {
     return (
@@ -120,20 +116,22 @@ export function CommanderDashboard() {
         </button>
       </div>
 
-      {/* Today (hero, right) + the panels (left) — fills the whole height. */}
+      {/* Today (hero, right) + the panels (left). */}
       <div className="grid min-h-0 flex-1 gap-5 xl:grid-cols-2">
         {/* Today's published schedule — plain white card. */}
         <section className="relative flex min-h-0 flex-col rounded-2xl border border-line bg-panel-solid p-6 shadow-card">
           <header className="mb-4 flex items-center justify-between gap-2">
-            <h2 className="t-display text-[22px]">{dashCopy.todaySchedule}</h2>
-            <a
-              href="#/schedule"
-              className="focus-ring t-body rounded-lg px-2.5 py-1 font-medium text-primary-hover transition-colors hover:bg-primary-soft"
+            <button
+              type="button"
+              onClick={() => navigate('/schedule')}
+              className="focus-ring flex items-center gap-1.5 text-start transition-colors hover:text-primary-hover"
             >
-              {dashCopy.fullScheduleShort}
-            </a>
+              <h2 className="t-display text-[22px]">{dashCopy.todaySchedule}</h2>
+              <span className="text-[18px] leading-none text-primary-hover">‹</span>
+            </button>
+            <InfoTip text={dashCopy.infoToday} />
           </header>
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-2 py-2">
+          <div className="no-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto px-2 py-2">
             {todayEvents.length === 0 ? (
               <p className="t-body py-10 text-center text-ink-muted">{dashCopy.nothingToday}</p>
             ) : (
@@ -148,40 +146,68 @@ export function CommanderDashboard() {
           </div>
         </section>
 
-        {/* Left column — cards flex to fill the height. */}
+        {/* Left column — requests / conflicts+draft / lectures. */}
         <div className="flex min-h-0 flex-col gap-4">
-          {/* Requests to accept — a touch larger, centred. */}
-          <PanelCard
+          {/* Requests to accept — same size as lectures. */}
+          <DashCard
             title={dashCopy.commanderRequests}
-            count={pendingRequests.length}
-            footerLabel={dashCopy.toShared}
-            onFooter={pendingRequests.length > 0 ? () => navigate('/shared') : undefined}
+            info={dashCopy.infoRequests}
+            onTitleClick={() => navigate('/shared')}
             center
-            className="flex-[1.2]"
+            className="flex-1"
           >
             {pendingRequests.length === 0 ? (
               <Empty text={dashCopy.noRequests} />
             ) : (
               pendingRequests.map((r) => {
                 const from = trainings.find((t) => t.id === r.requestedByTrainingId)?.name ?? ''
+                const mine = r.approvals.find((a) => a.commanderId === user?.id && a.status === 'PENDING')
                 return (
                   <div key={r.id} className="text-center">
                     <span className="block text-[16px] font-medium text-ink">{r.description}</span>
-                    {from ? <span className="text-[14px] text-ink-muted">{from}</span> : null}
+                    {from ? <span className="block text-[14px] text-ink-muted">{from}</span> : null}
+                    {mine ? (
+                      <div className="mt-2 flex justify-center gap-2">
+                        <Button
+                          variant="success"
+                          size="sm"
+                          onClick={() => void decideOnChange(r.id, mine.trainingId, 'APPROVED')}
+                        >
+                          {buttons.approveChange}
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => void decideOnChange(r.id, mine.trainingId, 'REJECTED')}
+                        >
+                          {buttons.rejectChange}
+                        </Button>
+                      </div>
+                    ) : null}
                   </div>
                 )
               })
             )}
-          </PanelCard>
+          </DashCard>
 
           {/* Open conflicts (right, scrollable) + draft status (left third). */}
-          <div className="card-tex flex min-h-0 flex-[1.6] overflow-hidden !p-0">
+          <div className="card-tex flex min-h-0 flex-[2.5] overflow-hidden !p-0">
             <div className="flex min-h-0 flex-[2] flex-col p-5">
-              <div className="mb-3 flex shrink-0 items-center justify-between gap-2">
-                <h2 className="text-[22px] font-semibold text-ink">{dashCopy.openConflictsTitle}</h2>
-                {conflicts.length > 0 ? <CountBadge value={conflicts.length} /> : null}
+              <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => navigate('/conflicts')}
+                  className="focus-ring flex items-center gap-1.5 text-start text-[22px] font-semibold text-ink transition-colors hover:text-primary-hover"
+                >
+                  {dashCopy.openConflictsTitle}
+                  <span className="text-[18px] leading-none text-primary-hover">‹</span>
+                </button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <ConflictCount blocking={blocking} warning={warning} />
+                  <InfoTip text={dashCopy.infoConflicts} />
+                </div>
               </div>
-              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pe-1">
+              <div className="no-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto pe-1">
                 {conflicts.length === 0 ? (
                   <Empty text={dashCopy.noOpenConflicts} />
                 ) : (
@@ -196,15 +222,6 @@ export function CommanderDashboard() {
                   ))
                 )}
               </div>
-              {conflicts.length > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => navigate('/conflicts')}
-                  className="focus-ring mt-3 shrink-0 self-start rounded text-[14px] font-medium text-primary-hover hover:underline"
-                >
-                  {dashCopy.toConflicts}
-                </button>
-              ) : null}
             </div>
 
             {/* Draft status — a third, on the left, centred. */}
@@ -221,97 +238,103 @@ export function CommanderDashboard() {
             </div>
           </div>
 
-          {/* Closest lectures — centred. */}
-          <PanelCard
+          {/* Closest lectures — same size as requests, with confirmation status. */}
+          <DashCard
             title={dashCopy.closestLectures}
-            footerLabel={nav.guestLecturers}
-            onFooter={() => navigate('/lecturers')}
+            info={dashCopy.infoLectures}
+            onTitleClick={() => navigate('/lecturers')}
             center
             className="flex-1"
           >
             {lectures.length === 0 ? (
               <Empty text={emptyStates.noUpcomingLectures} />
             ) : (
-              lectures.map((e) => (
-                <div key={e.id} className="text-center">
-                  <span className="block text-[16px] font-medium text-ink">{e.title}</span>
-                  <span className="tnum text-[14px] text-ink-muted" dir="ltr">
-                    {formatDateHe(e.date)} · {e.startTime}
-                  </span>
-                </div>
-              ))
+              lectures.map((e) => {
+                const details = lectureDetails.find((d) => d.eventId === e.id || `${d.eventId}-d` === e.id)
+                return (
+                  <div key={e.id} className="text-center">
+                    <span className="block text-[16px] font-medium text-ink">{e.title}</span>
+                    <span className="tnum block text-[14px] text-ink-muted" dir="ltr">
+                      {formatDateHe(e.date)} · {e.startTime}
+                    </span>
+                    {details ? <StatusChip status={details.confirmationStatus} /> : null}
+                  </div>
+                )
+              })
             )}
-          </PanelCard>
-
-          {/* Upcoming peak days — centred. */}
-          <PanelCard
-            title={dashCopy.upcomingPeakDays}
-            count={peakDays.length}
-            footerLabel={nav.peakDays}
-            onFooter={() => navigate('/peak-days')}
-            center
-            className="flex-1"
-          >
-            {peakDays.length === 0 ? (
-              <Empty text={dashCopy.noPeakDays} />
-            ) : (
-              peakDays.map((e) => (
-                <div key={e.id} className="text-center">
-                  <span className="block text-[16px] font-medium text-ink">{e.title}</span>
-                  <span className="tnum text-[14px] text-ink-muted" dir="ltr">
-                    {formatDateHe(e.date)}
-                  </span>
-                </div>
-              ))
-            )}
-          </PanelCard>
+          </DashCard>
         </div>
       </div>
     </div>
   )
 }
 
-function PanelCard(props: {
+/** Info marker + hover tooltip explaining a card. */
+function InfoTip({ text }: { text: string }) {
+  return (
+    <span className="group/tip relative inline-flex shrink-0">
+      <span className="flex h-[18px] w-[18px] cursor-help items-center justify-center rounded-full border border-line bg-panel-solid text-[11px] font-bold leading-none text-ink-muted">
+        ?
+      </span>
+      <span className="pointer-events-none absolute end-0 top-full z-40 mt-1.5 w-56 rounded-lg border border-line bg-white px-3 py-2 text-start text-[13px] font-normal leading-snug text-black opacity-0 shadow-md transition-opacity duration-150 group-hover/tip:opacity-100">
+        {text}
+      </span>
+    </span>
+  )
+}
+
+function DashCard(props: {
   title: string
-  count?: number
-  children: ReactNode
-  footerLabel?: string
-  onFooter?: () => void
+  info: string
+  onTitleClick?: () => void
   center?: boolean
   className?: string
+  children: ReactNode
 }) {
   return (
     <div className={clsx('card-tex flex min-h-0 flex-col p-5', props.className)}>
-      <div className="mb-3 flex shrink-0 items-center justify-between gap-2">
-        <h2 className="text-[22px] font-semibold text-ink">{props.title}</h2>
-        {typeof props.count === 'number' && props.count > 0 ? <CountBadge value={props.count} /> : null}
+      <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
+        {props.onTitleClick ? (
+          <button
+            type="button"
+            onClick={props.onTitleClick}
+            className="focus-ring flex items-center gap-1.5 text-start text-[22px] font-semibold text-ink transition-colors hover:text-primary-hover"
+          >
+            {props.title}
+            <span className="text-[18px] leading-none text-primary-hover">‹</span>
+          </button>
+        ) : (
+          <h2 className="text-[22px] font-semibold text-ink">{props.title}</h2>
+        )}
+        <InfoTip text={props.info} />
       </div>
       <div
         className={clsx(
-          'min-h-0 flex-1 overflow-y-auto',
-          props.center ? 'flex flex-col justify-center gap-2.5' : 'space-y-2'
+          'no-scrollbar min-h-0 flex-1 overflow-y-auto',
+          props.center ? 'flex flex-col justify-center gap-3' : 'space-y-2'
         )}
       >
         {props.children}
       </div>
-      {props.footerLabel && props.onFooter ? (
-        <button
-          type="button"
-          onClick={props.onFooter}
-          className="focus-ring mt-3 shrink-0 self-start rounded text-[14px] font-medium text-primary-hover hover:underline"
-        >
-          {props.footerLabel}
-        </button>
-      ) : null}
     </div>
   )
 }
 
-function CountBadge({ value }: { value: number }) {
+function ConflictCount({ blocking, warning }: { blocking: number; warning: number }) {
+  if (blocking + warning === 0) return null
   return (
-    <span className="shrink-0 rounded-full bg-primary-soft px-2.5 py-0.5 text-[14px] font-semibold text-primary-hover">
-      {value}
-    </span>
+    <div className="flex items-center gap-1.5 text-[13px] font-semibold">
+      {blocking > 0 ? (
+        <span className="rounded-md bg-danger-soft px-2 py-0.5 text-danger">
+          {blocking} {dashCopy.conflictsBlocking}
+        </span>
+      ) : null}
+      {warning > 0 ? (
+        <span className="rounded-md bg-warning-soft px-2 py-0.5 text-warning">
+          {warning} {dashCopy.conflictsWarning}
+        </span>
+      ) : null}
+    </div>
   )
 }
 
@@ -333,6 +356,22 @@ function SeverityChip({ severity }: { severity: ConflictSeverity }) {
   return (
     <span className={clsx('shrink-0 rounded-md px-2 py-0.5 text-[12px] font-medium', cls)}>
       {conflictSeverityLabels[severity]}
+    </span>
+  )
+}
+
+function StatusChip({ status }: { status: LectureConfirmationStatus }) {
+  const cls =
+    status === 'CONFIRMED'
+      ? 'bg-success-soft text-success'
+      : status === 'REMINDER_SENT'
+        ? 'bg-primary-soft text-primary-hover'
+        : status === 'CANCELLED'
+          ? 'bg-danger-soft text-danger'
+          : 'bg-neutral-block text-ink-muted'
+  return (
+    <span className={clsx('mt-1 inline-block rounded-md px-2 py-0.5 text-[12px] font-medium', cls)}>
+      {confirmationStatusLabels[status]}
     </span>
   )
 }

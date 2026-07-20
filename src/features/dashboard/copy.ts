@@ -32,10 +32,16 @@ export const dashCopy = {
   openConflictsTitle: 'קונפליקטים פתוחים בטיוטה',
   noOpenConflicts: 'אין קונפליקטים פתוחים בטיוטה.',
   draftStatusTitle: 'מצב הטיוטה',
-  upcomingPeakDays: 'ימי שיא קרובים',
-  noPeakDays: 'אין ימי שיא קרובים השבוע.',
   draftPublished: 'מפורסם ומעודכן',
   toShared: 'למרכז הלו״זים המשותפים',
   toConflicts: 'למרכז הקונפליקטים',
-  toPublish: 'למעבר לפרסום'
+  toPublish: 'למעבר לפרסום',
+  // Card explanations (info tooltip)
+  infoToday: 'הלו״ז שפורסם להיום — בדיוק מה שהחיילים רואים כרגע.',
+  infoRequests: 'בקשות לשינוי בלו״זים משותפים שממתינות לאישורך. אישור או דחייה יעדכנו את ההכשרות המשותפות.',
+  infoConflicts: 'התנגשויות בטיוטת הלו״ז שכדאי לפתור לפני פרסום. מימין ההתנגשויות, משמאל מצב הפרסום של הטיוטה.',
+  infoLectures: 'הרצאות החוץ הקרובות השבוע ומצב אישור ההגעה של המרצה.',
+  conflictsBlocking: 'חוסמים',
+  conflictsWarning: 'אזהרות',
+  noConflictsShort: 'הכול תקין'
 } as const
