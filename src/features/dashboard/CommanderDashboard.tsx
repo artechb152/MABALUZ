@@ -88,6 +88,15 @@ export function CommanderDashboard() {
     )
   }, [draft, published])
 
+  const blocking = conflicts.filter((c) => c.severity === 'BLOCKING').length
+  const warning = conflicts.filter((c) => c.severity === 'WARNING').length
+  const info = conflicts.filter((c) => c.severity === 'INFO').length
+
+  // Whole draft-status card: green = clean & published, orange = unpublished
+  // changes, red = unresolved blocking conflicts.
+  const draftState: 'ok' | 'unstaged' | 'blocked' =
+    blocking > 0 ? 'blocked' : diverged ? 'unstaged' : 'ok'
+
   if (!training) {
     return (
       <div>
@@ -140,7 +149,12 @@ export function CommanderDashboard() {
         <div className="no-scrollbar flex min-h-0 flex-col gap-4 overflow-y-auto">
           {/* Requests to handle — a bounded summary that opens the confirmations
               screen. Content is fixed-size, so it is always fully visible. */}
-          <DashCard title={dashCopy.commanderRequests} info={dashCopy.infoRequests} className="min-h-[176px] flex-1">
+          <DashCard
+            title={dashCopy.commanderRequests}
+            info={dashCopy.infoRequests}
+            count={pendingRequests.length}
+            className="min-h-[176px] flex-1"
+          >
             <Centered>
               {pendingRequests.length === 0 ? (
                 <Empty text={dashCopy.noRequests} />
@@ -165,8 +179,14 @@ export function CommanderDashboard() {
           {/* Open conflicts (swipe deck) + draft-status inset panel. */}
           <div className="card-tex flex min-h-[184px] flex-[1.4] flex-col p-5">
             <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
-              <h2 className="text-[22px] font-semibold text-ink">{dashCopy.openConflictsTitle}</h2>
-              <InfoTip text={dashCopy.infoConflicts} />
+              <div className="flex items-center gap-2">
+                <h2 className="text-[22px] font-semibold text-ink">{dashCopy.openConflictsTitle}</h2>
+                <CountPill count={conflicts.length} />
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <ConflictCounts blocking={blocking} warning={warning} info={info} />
+                <InfoTip text={dashCopy.infoConflicts} />
+              </div>
             </div>
             <div className="flex min-h-0 flex-1 gap-4">
               {/* Conflicts — one at a time, swipeable (right). */}
@@ -190,20 +210,27 @@ export function CommanderDashboard() {
                 )}
               </div>
 
-              {/* Draft status — an inset panel, split off by a gap (no hard divider). */}
-              <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-line bg-neutral-block/60 p-4 text-center">
-                <span className="text-[15px] font-semibold text-ink">{dashCopy.draftStatusTitle}</span>
-                <span
-                  className={clsx(
-                    'rounded-full px-3 py-1 text-[13px] font-medium',
-                    diverged ? 'bg-warning-soft text-warning' : 'bg-success-soft text-success'
-                  )}
-                >
-                  {diverged ? dashCopy.draftDiverged : dashCopy.draftPublished}
+              {/* Draft status — the whole panel takes the state colour:
+                  green = clean, orange = unpublished changes, red = blocked. */}
+              <div
+                className={clsx(
+                  'flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border p-4 text-center transition-colors',
+                  DRAFT_STATE[draftState].panel
+                )}
+              >
+                <span className={clsx('text-[15px] font-semibold', DRAFT_STATE[draftState].text)}>
+                  {dashCopy.draftStatusTitle}
                 </span>
-                {diverged ? (
+                <span className={clsx('text-[13px] font-medium', DRAFT_STATE[draftState].text)}>
+                  {draftState === 'blocked'
+                    ? dashCopy.draftBlocked
+                    : draftState === 'unstaged'
+                      ? dashCopy.draftDiverged
+                      : dashCopy.draftPublished}
+                </span>
+                {draftState !== 'ok' ? (
                   <button type="button" onClick={() => navigate('/schedule')} className={chromeButtonClass}>
-                    {dashCopy.viewChanges}
+                    {draftState === 'blocked' ? dashCopy.resolveConflicts : dashCopy.viewChanges}
                   </button>
                 ) : null}
               </div>
@@ -226,24 +253,25 @@ export function CommanderDashboard() {
                     ? [lecturer.fullName, lecturer.organization].filter(Boolean).join(' · ')
                     : (e.instructorName ?? '')
                   return (
-                    <div className="mx-auto flex w-full max-w-sm items-stretch gap-3 rounded-2xl border border-line bg-panel-solid p-3 text-start shadow-sm">
-                      {/* Date badge */}
-                      <div className="flex w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-primary-soft py-2 text-primary-hover">
-                        <span className="tnum text-[22px] font-bold leading-none">
+                    // No nested card: the lecture fills the panel directly.
+                    <div className="flex w-full items-center gap-5 px-2 text-start">
+                      {/* Date block — grey/white, not indigo. */}
+                      <div className="flex w-24 shrink-0 flex-col items-center justify-center rounded-2xl border border-line bg-neutral-block py-3">
+                        <span className="tnum text-[38px] font-bold leading-none text-ink">
                           {Number.parseInt(e.date.slice(8, 10), 10)}
                         </span>
-                        <span className="mt-0.5 text-[10px] font-medium leading-none">
+                        <span className="mt-1 text-[16px] font-medium leading-none text-ink-muted">
                           {hebrewMonths[Number.parseInt(e.date.slice(5, 7), 10) - 1]}
                         </span>
                       </div>
-                      {/* Details */}
-                      <div className="flex min-w-0 flex-1 flex-col justify-center">
-                        <p className="truncate text-[15px] font-semibold leading-snug text-ink">{e.title}</p>
+                      {/* Details — larger, filling the space. */}
+                      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
+                        <p className="line-clamp-2 text-[20px] font-semibold leading-snug text-ink">{e.title}</p>
                         {subtitle ? (
-                          <p className="mt-0.5 truncate text-[12px] text-ink-muted">{subtitle}</p>
+                          <p className="truncate text-[15px] text-ink-muted">{subtitle}</p>
                         ) : null}
-                        <div className="mt-1.5 flex items-center gap-2">
-                          <span className="tnum text-[12px] font-medium text-ink-muted" dir="ltr">
+                        <div className="mt-0.5 flex flex-wrap items-center gap-2.5">
+                          <span className="tnum text-[16px] font-semibold text-ink" dir="ltr">
                             {e.startTime}–{e.endTime}
                           </span>
                           {details ? <StatusChip status={details.confirmationStatus} /> : null}
@@ -315,11 +343,20 @@ function InfoTip({ text }: { text: string }) {
   )
 }
 
-function DashCard(props: { title: string; info: string; className?: string; children: ReactNode }) {
+function DashCard(props: {
+  title: string
+  info: string
+  count?: number
+  className?: string
+  children: ReactNode
+}) {
   return (
     <div className={clsx('card-tex flex flex-col p-5', props.className)}>
       <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
-        <h2 className="text-[22px] font-semibold text-ink">{props.title}</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-[22px] font-semibold text-ink">{props.title}</h2>
+          {props.count != null ? <CountPill count={props.count} /> : null}
+        </div>
         <InfoTip text={props.info} />
       </div>
       <div className="flex min-h-0 flex-1 flex-col">{props.children}</div>
@@ -327,12 +364,51 @@ function DashCard(props: { title: string; info: string; className?: string; chil
   )
 }
 
+/** Neutral total-count pill shown next to a card title. */
+function CountPill({ count }: { count: number }) {
+  return (
+    <span className="tnum flex h-6 min-w-6 items-center justify-center rounded-full bg-neutral-block px-1.5 text-[13px] font-semibold text-ink-muted">
+      {count}
+    </span>
+  )
+}
+
+/** Per-severity conflict counts (only the non-zero ones). */
+function ConflictCounts({ blocking, warning, info }: { blocking: number; warning: number; info: number }) {
+  if (blocking + warning + info === 0) return null
+  return (
+    <div className="flex items-center gap-1.5 text-[12px] font-semibold">
+      {blocking > 0 ? (
+        <span className="rounded-md bg-danger-soft px-2 py-0.5 text-danger">
+          {blocking} {dashCopy.conflictsBlocking}
+        </span>
+      ) : null}
+      {warning > 0 ? (
+        <span className="rounded-md bg-warning-soft px-2 py-0.5 text-warning">
+          {warning} {dashCopy.conflictsWarning}
+        </span>
+      ) : null}
+      {info > 0 ? (
+        <span className="rounded-md bg-neutral-block px-2 py-0.5 text-ink-muted">
+          {info} {dashCopy.conflictsInfo}
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
+// Draft-status palette: the whole panel takes the colour of the current state.
+const DRAFT_STATE = {
+  ok: { panel: 'border-success/30 bg-success-soft', text: 'text-success' },
+  unstaged: { panel: 'border-warning/30 bg-warning-soft', text: 'text-warning' },
+  blocked: { panel: 'border-danger/30 bg-danger-soft', text: 'text-danger' }
+} as const
+
 /**
- * Single-item deck: shows one entry; drag it or use the side buttons to page.
- * In RTL the left control (and a leftward drag) go forward to the next item;
- * the right control goes back. Each swap slides in from the side opposite the
- * one it left toward, so paging reads like items running along a rail. The drag
- * has velocity flicks, rubber-band resistance at the ends, and a spring settle.
+ * Single-item deck: shows one entry; drag/swipe it or click a pagination dot to
+ * page. A rightward swipe advances (the next card slides in from the right); a
+ * leftward swipe goes back. The drag has velocity flicks, rubber-band resistance
+ * at the ends, and a spring settle.
  */
 function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T) => ReactNode }) {
   const [index, setIndex] = useState(0)
@@ -387,8 +463,8 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
     setDragging(false)
     const flick = Math.abs(v) > 0.4
     if (Math.abs(dx) > 8 && (Math.abs(dx) > 56 || flick)) {
-      // Leftward swipe advances and pulls the next card in from the right.
-      if ((flick ? v : dx) < 0) go(1, true)
+      // Rightward swipe advances (next, in from the right); leftward goes back.
+      if ((flick ? v : dx) > 0) go(1, true)
       else go(-1, false)
     } else {
       // Did not cross the threshold: spring back to centre.
@@ -398,7 +474,7 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
   }
 
   // Resist dragging past the first/last item so the ends feel bounded.
-  const blocked = (dragX < 0 && atEnd) || (dragX > 0 && atStart)
+  const blocked = (dragX > 0 && atEnd) || (dragX < 0 && atStart)
   const resisted = blocked ? dragX * 0.3 : dragX
   const enter = enterRight ? 'deckInRight' : 'deckInLeft'
 

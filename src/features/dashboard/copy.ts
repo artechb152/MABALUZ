@@ -35,12 +35,15 @@ export const dashCopy = {
   noOpenConflicts: 'אין קונפליקטים פתוחים בטיוטה.',
   draftStatusTitle: 'מצב הטיוטה',
   draftPublished: 'מפורסם ומעודכן',
+  draftBlocked: 'קיימות התנגשויות שלא נפתרו',
   viewChanges: 'צפייה בשינויים',
+  resolveConflicts: 'מעבר לפתרון',
   // Card explanations (info tooltip)
   infoToday: 'הלו״ז שפורסם להיום — בדיוק מה שהחיילים רואים כרגע.',
   infoRequests: 'בקשות לשינוי בלו״זים משותפים שממתינות לאישורך. אישור או דחייה יעדכנו את ההכשרות המשותפות.',
   infoConflicts: 'התנגשויות בטיוטת הלו״ז שכדאי לפתור לפני פרסום. מימין ההתנגשויות, משמאל מצב הפרסום של הטיוטה.',
   infoLectures: 'הרצאות החוץ הקרובות השבוע ומצב אישור ההגעה של המרצה.',
   conflictsBlocking: 'חוסמים',
-  conflictsWarning: 'אזהרות'
+  conflictsWarning: 'אזהרות',
+  conflictsInfo: 'מידע'
 } as const

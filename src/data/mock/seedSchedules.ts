@@ -401,21 +401,134 @@ const ops = buildOpsPublishedEvents()
 
 const intelPrevEvents = buildBaseWeekEvents(TRAINING_INTEL_ID, intelStart, intelEnd, intelTitles)
 
-const intelDraftEvents = placeSpecial(
-  cloneAsDraft(intel.events, 'schedule-intel-draft'),
+// Two more guest lectures this week so the lectures deck has several cards.
+export const intelDraftLecture1 = makeEvent({
+  trainingId: TRAINING_INTEL_ID,
+  scheduleId: 'schedule-intel-draft',
+  title: 'הרצאת חוץ: לוחמת סייבר',
+  type: 'GUEST_LECTURE',
+  flexibilityLevel: 'LOCKED_GUEST_LECTURE',
+  date: nextWorkdayISO(addDaysISO(today, 2)),
+  startTime: '09:00',
+  endTime: '10:30',
+  isLocked: true,
+  lockReason: 'מועד מתואם עם המרצה',
+  lecturerId: 'lecturer-roni-shalev',
+  instructorName: 'סא״ל (מיל׳) רוני שלו',
+  location: 'אולם הרצאות',
+  showBasicDetailsOnly: true
+})
+export const intelDraftLecture2 = makeEvent({
+  trainingId: TRAINING_INTEL_ID,
+  scheduleId: 'schedule-intel-draft',
+  title: 'הרצאת חוץ: אתיקה במודיעין',
+  type: 'GUEST_LECTURE',
+  flexibilityLevel: 'LOCKED_GUEST_LECTURE',
+  date: nextWorkdayISO(addDaysISO(today, 5)),
+  startTime: '15:00',
+  endTime: '16:30',
+  isLocked: true,
+  lockReason: 'מועד מתואם עם המרצה',
+  lecturerId: 'lecturer-amit-barak',
+  instructorName: 'ד״ר עמית ברק',
+  location: 'כיתה 3',
+  showBasicDetailsOnly: true
+})
+
+// Deliberately overlapping events (appended raw, bypassing placeSpecial) so the
+// draft carries a real mix of blocking and warning conflicts.
+const intelDraftConflicts: ScheduleEvent[] = [
+  // Flexible over the locked shared safety lecture -> WARNING.
   makeEvent({
     trainingId: TRAINING_INTEL_ID,
     scheduleId: 'schedule-intel-draft',
-    title: 'תרגול ניווט לילה',
+    title: 'חזרה על חומר',
+    type: 'FLEXIBLE_CONTENT',
+    flexibilityLevel: 'FLEXIBLE',
+    date: sharedLectureDate,
+    startTime: '11:00',
+    endTime: '11:45'
+  }),
+  // Locked briefing over the locked shared lecture -> BLOCKING.
+  makeEvent({
+    trainingId: TRAINING_INTEL_ID,
+    scheduleId: 'schedule-intel-draft',
+    title: 'תדריך מבצעי',
+    type: 'FORMATION',
+    flexibilityLevel: 'SEMI_FLEXIBLE',
+    date: sharedLectureDate,
+    startTime: '11:30',
+    endTime: '12:30',
+    isLocked: true,
+    lockReason: 'תואם מראש'
+  }),
+  // Flexible over the guest lecture -> WARNING.
+  makeEvent({
+    trainingId: TRAINING_INTEL_ID,
+    scheduleId: 'schedule-intel-draft',
+    title: 'תרגול כיתתי',
+    type: 'FLEXIBLE_CONTENT',
+    flexibilityLevel: 'FLEXIBLE',
+    date: intelGuestLectureDate,
+    startTime: '13:30',
+    endTime: '14:15'
+  }),
+  // Locked visit over the guest lecture -> BLOCKING.
+  makeEvent({
+    trainingId: TRAINING_INTEL_ID,
+    scheduleId: 'schedule-intel-draft',
+    title: 'ביקור מפקד חטיבה',
+    type: 'CUSTOM',
+    flexibilityLevel: 'SEMI_FLEXIBLE',
+    date: intelGuestLectureDate,
+    startTime: '14:00',
+    endTime: '15:00',
+    isLocked: true,
+    lockReason: 'מועד קבוע'
+  }),
+  // Two flexible items colliding -> WARNING.
+  makeEvent({
+    trainingId: TRAINING_INTEL_ID,
+    scheduleId: 'schedule-intel-draft',
+    title: 'שיעור השלמה א׳',
     type: 'FLEXIBLE_CONTENT',
     flexibilityLevel: 'FLEXIBLE',
     date: nextWorkdayISO(addDaysISO(today, 3)),
-    startTime: '19:00',
-    endTime: '20:00',
-    commanderNotes: 'טיוטה — טרם פורסם',
-    equipment: ['פנס', 'מפה']
+    startTime: '10:00',
+    endTime: '11:00'
+  }),
+  makeEvent({
+    trainingId: TRAINING_INTEL_ID,
+    scheduleId: 'schedule-intel-draft',
+    title: 'שיעור השלמה ב׳',
+    type: 'FLEXIBLE_CONTENT',
+    flexibilityLevel: 'FLEXIBLE',
+    date: nextWorkdayISO(addDaysISO(today, 3)),
+    startTime: '10:30',
+    endTime: '11:30'
   })
-)
+]
+
+const intelDraftEvents = [
+  ...placeSpecial(
+    cloneAsDraft(intel.events, 'schedule-intel-draft'),
+    makeEvent({
+      trainingId: TRAINING_INTEL_ID,
+      scheduleId: 'schedule-intel-draft',
+      title: 'תרגול ניווט לילה',
+      type: 'FLEXIBLE_CONTENT',
+      flexibilityLevel: 'FLEXIBLE',
+      date: nextWorkdayISO(addDaysISO(today, 3)),
+      startTime: '19:00',
+      endTime: '20:00',
+      commanderNotes: 'טיוטה — טרם פורסם',
+      equipment: ['פנס', 'מפה']
+    })
+  ),
+  intelDraftLecture1,
+  intelDraftLecture2,
+  ...intelDraftConflicts
+]
 
 export const mockSchedules: Schedule[] = [
   {
@@ -497,8 +610,19 @@ export const mockSharedGroups: SharedEventGroup[] = [
       [TRAINING_INTEL_ID]: intel.sharedEventId,
       [TRAINING_OPS_ID]: ops.sharedEventId
     },
-    pendingChangeRequestIds: ['screq-1']
+    pendingChangeRequestIds: ['screq-1', 'screq-2', 'screq-3']
   }
+]
+
+const pendingFromOps = (id: string): SharedEventChangeRequest['approvals'] => [
+  {
+    trainingId: TRAINING_OPS_ID,
+    commanderId: 'user-commander-shira',
+    status: 'APPROVED',
+    decidedAt: '2026-07-06T14:00:00.000Z',
+    note: id
+  },
+  { trainingId: TRAINING_INTEL_ID, commanderId: 'user-commander-noam', status: 'PENDING' }
 ]
 
 export const mockChangeRequests: SharedEventChangeRequest[] = [
@@ -512,15 +636,33 @@ export const mockChangeRequests: SharedEventChangeRequest[] = [
     newDate: sharedLectureDate,
     newStartTime: '14:00',
     newEndTime: '15:45',
-    approvals: [
-      {
-        trainingId: TRAINING_OPS_ID,
-        commanderId: 'user-commander-shira',
-        status: 'APPROVED',
-        decidedAt: '2026-07-06T14:00:00.000Z'
-      },
-      { trainingId: TRAINING_INTEL_ID, commanderId: 'user-commander-noam', status: 'PENDING' }
-    ],
+    approvals: pendingFromOps('screq-1'),
+    status: 'PENDING'
+  },
+  {
+    id: 'screq-2',
+    groupId: SHARED_SAFETY_GROUP_ID,
+    requestedByUserId: 'user-commander-shira',
+    requestedByTrainingId: TRAINING_OPS_ID,
+    requestedAt: '2026-07-07T08:00:00.000Z',
+    description: 'הקדמת הרצאת הבטיחות ל-08:30 בבוקר',
+    newDate: sharedLectureDate,
+    newStartTime: '08:30',
+    newEndTime: '10:15',
+    approvals: pendingFromOps('screq-2'),
+    status: 'PENDING'
+  },
+  {
+    id: 'screq-3',
+    groupId: SHARED_SAFETY_GROUP_ID,
+    requestedByUserId: 'user-commander-shira',
+    requestedByTrainingId: TRAINING_OPS_ID,
+    requestedAt: '2026-07-08T11:00:00.000Z',
+    description: 'העברת הרצאת הבטיחות ליום פעילות אחר',
+    newDate: nextWorkdayISO(addDaysISO(today, 8)),
+    newStartTime: '10:15',
+    newEndTime: '12:00',
+    approvals: pendingFromOps('screq-3'),
     status: 'PENDING'
   }
 ]
@@ -545,6 +687,26 @@ export const mockGuestLectureDetails: GuestLectureDetails[] = [
     confirmationToken: 'confirm-roni-0001',
     maxDurationMinutes: 90,
     noConfirmationWarnMinutesBefore: 120
+  },
+  {
+    eventId: intelDraftLecture1.id,
+    trainingId: TRAINING_INTEL_ID,
+    lecturerId: 'lecturer-roni-shalev',
+    confirmationStatus: 'REMINDER_SENT',
+    confirmationToken: 'confirm-roni-int-1',
+    maxDurationMinutes: 90,
+    noConfirmationWarnMinutesBefore: 120,
+    reminderSentAt: SEED_TIME
+  },
+  {
+    eventId: intelDraftLecture2.id,
+    trainingId: TRAINING_INTEL_ID,
+    lecturerId: 'lecturer-amit-barak',
+    confirmationStatus: 'CONFIRMED',
+    confirmationToken: 'confirm-amit-int-2',
+    maxDurationMinutes: 90,
+    noConfirmationWarnMinutesBefore: 120,
+    confirmedAt: SEED_TIME
   }
 ]
 
