@@ -140,28 +140,27 @@ export function CommanderDashboard() {
             min-height that fits their content (never clipped); the column
             scrolls if the viewport is too short to grow them all. */}
         <div className="no-scrollbar flex min-h-0 flex-col gap-4 overflow-y-auto">
-          {/* Requests to handle — a bounded summary that opens the confirmations
-              screen. Content is fixed-size, so it is always fully visible. */}
+          {/* Requests to handle — a compact, fixed-height summary that opens the
+              confirmations screen. Kept small so the column never scrolls. */}
           <DashCard
             title={dashCopy.commanderRequests}
             info={dashCopy.infoRequests}
             count={pendingRequests.length}
-            className="min-h-[176px] flex-1"
+            className="min-h-[132px] flex-none p-4"
           >
             <Centered>
               {pendingRequests.length === 0 ? (
                 <Empty text={dashCopy.noRequests} />
               ) : (
-                <div className="flex w-full max-w-sm flex-col items-center gap-3 px-2 text-center">
-                  <span className="line-clamp-2 text-[15px] font-medium leading-snug text-ink">
+                <div className="flex w-full items-center justify-between gap-3">
+                  <span className="line-clamp-2 min-w-0 flex-1 text-start text-[14px] font-medium leading-snug text-ink">
                     {pendingRequests[0].description}
                   </span>
-                  {pendingRequests.length > 1 ? (
-                    <span className="text-[13px] text-ink-muted">
-                      {dashCopy.morePending(pendingRequests.length - 1)}
-                    </span>
-                  ) : null}
-                  <button type="button" onClick={() => navigate('/confirmations')} className={chromeButtonClass}>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/confirmations')}
+                    className={clsx(chromeButtonClass, 'shrink-0')}
+                  >
                     {dashCopy.handleRequests}
                   </button>
                 </div>
@@ -170,7 +169,7 @@ export function CommanderDashboard() {
           </DashCard>
 
           {/* Open conflicts (swipe deck) + draft-status inset panel. */}
-          <div className="card-tex flex min-h-[224px] flex-[1.5] flex-col p-5">
+          <div className="card-tex flex min-h-[216px] flex-[1.5] flex-col p-5">
             <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
               <div className="flex items-center gap-2.5">
                 <CountPill count={conflicts.length} />
@@ -189,7 +188,7 @@ export function CommanderDashboard() {
                   <SwipeDeck
                     items={conflicts}
                     renderItem={(c) => (
-                      <div className="mx-auto w-full max-w-md rounded-2xl border border-line/80 bg-panel-solid px-4 py-3.5">
+                      <div className="mx-auto w-full max-w-md rounded-2xl border border-line/80 bg-panel-solid px-4 py-3">
                         <p className="mb-1.5 text-[16px] font-medium text-ink">{c.title}</p>
                         {c.description ? (
                           <p className="line-clamp-2 text-[13px] leading-relaxed text-ink-muted">{c.description}</p>
@@ -242,7 +241,7 @@ export function CommanderDashboard() {
           </div>
 
           {/* Closest lectures — one at a time, swipeable, with confirmation status. */}
-          <DashCard title={dashCopy.closestLectures} info={dashCopy.infoLectures} className="min-h-[234px] flex-1">
+          <DashCard title={dashCopy.closestLectures} info={dashCopy.infoLectures} className="min-h-[226px] flex-1 p-5">
             {lectures.length === 0 ? (
               <Centered>
                 <Empty text={emptyStates.noUpcomingLectures} />
@@ -258,7 +257,7 @@ export function CommanderDashboard() {
                     : (e.instructorName ?? '')
                   return (
                     // Thin bordered card, centred in the panel.
-                    <div className="mx-auto flex w-full max-w-sm items-center gap-4 rounded-2xl border border-line/80 bg-panel-solid p-3.5 text-start">
+                    <div className="mx-auto flex w-full max-w-sm items-center gap-4 rounded-2xl border border-line/80 bg-panel-solid p-3 text-start">
                       {/* Date block — grey/white, not indigo. */}
                       <div className="flex w-[70px] shrink-0 flex-col items-center justify-center rounded-xl border border-line/70 bg-neutral-block py-2">
                         <span className="tnum text-[30px] font-bold leading-none text-ink">
@@ -355,7 +354,7 @@ function DashCard(props: {
   children: ReactNode
 }) {
   return (
-    <div className={clsx('card-tex flex flex-col p-5', props.className)}>
+    <div className={clsx('card-tex flex flex-col', props.className)}>
       <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
         <div className="flex items-center gap-2.5">
           {props.count != null ? <CountPill count={props.count} /> : null}
