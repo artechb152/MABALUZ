@@ -35,6 +35,24 @@ export function TrainingPicker() {
 
   if (myTrainings.length === 0 || !selected) return null
 
+  // A commander bound to a single training has nothing to switch between —
+  // show the training as a static label, not an interactive dropdown.
+  if (myTrainings.length === 1) {
+    return (
+      <div className="flex items-center rounded-xl border border-line bg-panel-solid px-4 py-1.5 shadow-sm">
+        <span className="min-w-0 text-start leading-tight">
+          <span className="block text-[12px] font-medium text-ink-muted">{dashboards.currentTraining}</span>
+          <span className="flex items-baseline gap-2">
+            <span className="truncate text-[16px] font-semibold text-ink">{selected.name}</span>
+            <span dir="ltr" className="tnum shrink-0 text-[13px] font-light text-ink-muted">
+              {formatDateHe(selected.startDate)} — {formatDateHe(selected.endDate)}
+            </span>
+          </span>
+        </span>
+      </div>
+    )
+  }
+
   return (
     <div ref={ref} className="relative">
       <button

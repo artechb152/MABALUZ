@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { clsx } from 'clsx'
 import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
-import { buttons, confirmationStatusLabels, emptyStates, hebrewMonths, nav } from '@/lib/hebrewCopy'
+import { confirmationStatusLabels, emptyStates, hebrewMonths, nav } from '@/lib/hebrewCopy'
 import {
   useCurrentUser,
   useDraftSchedule,
@@ -13,7 +13,6 @@ import {
 } from '@/app/hooks'
 import { useDb } from '@/app/dbStore'
 import { useNow } from '@/app/useNow'
-import { useSession } from '@/app/sessionStore'
 import { addDaysISO, todayISO, toMinutes } from '@/lib/time'
 import { detectConflicts } from '@/features/scheduling-engine'
 import type { LectureConfirmationStatus, ScheduleEvent } from '@/types'
@@ -34,7 +33,6 @@ export function CommanderDashboard() {
   const changeRequests = useDb((s) => s.changeRequests)
   const lecturers = useDb((s) => s.lecturers)
   const lectureDetails = useDb((s) => s.guestLectureDetails)
-  const setSoldierPreview = useSession((s) => s.setSoldierPreview)
   const now = useNow()
 
   const today = todayISO()
@@ -109,15 +107,10 @@ export function CommanderDashboard() {
   return (
     // Fills the viewport: the page never scrolls, the columns/cards do.
     <div className="flex h-full flex-col">
-      {/* Greeting + training name; soldier-view toggle on the left. */}
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="t-display">{user ? dashCopy.hello(user.firstName) : nav.dashboard}</h1>
-          <p className="mt-1 text-[18px] font-medium text-ink-muted">{training.name}</p>
-        </div>
-        <button type="button" onClick={() => setSoldierPreview(true)} className={chromeButtonClass}>
-          {buttons.soldierPreview}
-        </button>
+      {/* Greeting + training name (soldier-view toggle now lives in the navbar). */}
+      <div className="mb-4">
+        <h1 className="t-display">{user ? dashCopy.hello(user.firstName) : nav.dashboard}</h1>
+        <p className="mt-1 text-[18px] font-medium text-ink-muted">{training.name}</p>
       </div>
 
       {/* Today (hero, right) + the panels (left). */}
@@ -177,11 +170,11 @@ export function CommanderDashboard() {
           </DashCard>
 
           {/* Open conflicts (swipe deck) + draft-status inset panel. */}
-          <div className="card-tex flex min-h-[184px] flex-[1.4] flex-col p-5">
+          <div className="card-tex flex min-h-[188px] flex-[1.4] flex-col p-5">
             <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <h2 className="text-[22px] font-semibold text-ink">{dashCopy.openConflictsTitle}</h2>
+              <div className="flex items-center gap-2.5">
                 <CountPill count={conflicts.length} />
+                <h2 className="text-[22px] font-semibold text-ink">{dashCopy.openConflictsTitle}</h2>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <ConflictCounts blocking={blocking} warning={warning} info={info} />
@@ -238,7 +231,7 @@ export function CommanderDashboard() {
           </div>
 
           {/* Closest lectures — one at a time, swipeable, with confirmation status. */}
-          <DashCard title={dashCopy.closestLectures} info={dashCopy.infoLectures} className="min-h-[184px] flex-1">
+          <DashCard title={dashCopy.closestLectures} info={dashCopy.infoLectures} className="min-h-[212px] flex-1">
             {lectures.length === 0 ? (
               <Centered>
                 <Empty text={emptyStates.noUpcomingLectures} />
@@ -253,25 +246,25 @@ export function CommanderDashboard() {
                     ? [lecturer.fullName, lecturer.organization].filter(Boolean).join(' · ')
                     : (e.instructorName ?? '')
                   return (
-                    // No nested card: the lecture fills the panel directly.
-                    <div className="flex w-full items-center gap-5 px-2 text-start">
+                    // Thin bordered card, centred in the panel.
+                    <div className="mx-auto flex w-full max-w-sm items-center gap-4 rounded-xl border border-line bg-panel-solid p-3 text-start shadow-sm">
                       {/* Date block — grey/white, not indigo. */}
-                      <div className="flex w-24 shrink-0 flex-col items-center justify-center rounded-2xl border border-line bg-neutral-block py-3">
-                        <span className="tnum text-[38px] font-bold leading-none text-ink">
+                      <div className="flex w-[70px] shrink-0 flex-col items-center justify-center rounded-xl bg-neutral-block py-2">
+                        <span className="tnum text-[30px] font-bold leading-none text-ink">
                           {Number.parseInt(e.date.slice(8, 10), 10)}
                         </span>
-                        <span className="mt-1 text-[16px] font-medium leading-none text-ink-muted">
+                        <span className="mt-1 text-[13px] font-medium leading-none text-ink-muted">
                           {hebrewMonths[Number.parseInt(e.date.slice(5, 7), 10) - 1]}
                         </span>
                       </div>
                       {/* Details — larger, filling the space. */}
-                      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
-                        <p className="line-clamp-2 text-[20px] font-semibold leading-snug text-ink">{e.title}</p>
+                      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+                        <p className="truncate text-[17px] font-semibold text-ink">{e.title}</p>
                         {subtitle ? (
-                          <p className="truncate text-[15px] text-ink-muted">{subtitle}</p>
+                          <p className="truncate text-[13px] text-ink-muted">{subtitle}</p>
                         ) : null}
-                        <div className="mt-0.5 flex flex-wrap items-center gap-2.5">
-                          <span className="tnum text-[16px] font-semibold text-ink" dir="ltr">
+                        <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                          <span className="tnum text-[15px] font-semibold text-ink" dir="ltr">
                             {e.startTime}–{e.endTime}
                           </span>
                           {details ? <StatusChip status={details.confirmationStatus} /> : null}
@@ -353,9 +346,9 @@ function DashCard(props: {
   return (
     <div className={clsx('card-tex flex flex-col p-5', props.className)}>
       <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-[22px] font-semibold text-ink">{props.title}</h2>
+        <div className="flex items-center gap-2.5">
           {props.count != null ? <CountPill count={props.count} /> : null}
+          <h2 className="text-[22px] font-semibold text-ink">{props.title}</h2>
         </div>
         <InfoTip text={props.info} />
       </div>
@@ -364,35 +357,32 @@ function DashCard(props: {
   )
 }
 
-/** Neutral total-count pill shown next to a card title. */
+/** Neutral total-count pill shown before a card title. */
 function CountPill({ count }: { count: number }) {
   return (
-    <span className="tnum flex h-6 min-w-6 items-center justify-center rounded-full bg-neutral-block px-1.5 text-[13px] font-semibold text-ink-muted">
+    <span className="tnum flex h-7 min-w-7 items-center justify-center rounded-full bg-neutral-block px-2 text-[15px] font-semibold text-ink-muted">
       {count}
     </span>
   )
 }
 
-/** Per-severity conflict counts (only the non-zero ones). */
+/** Per-severity conflict counts — a calm coloured-dot + count line. */
 function ConflictCounts({ blocking, warning, info }: { blocking: number; warning: number; info: number }) {
   if (blocking + warning + info === 0) return null
+  const parts: { n: number; dot: string; label: string }[] = [
+    { n: blocking, dot: 'bg-danger', label: dashCopy.conflictsBlocking },
+    { n: warning, dot: 'bg-warning', label: dashCopy.conflictsWarning },
+    { n: info, dot: 'bg-ink-muted', label: dashCopy.conflictsInfo }
+  ].filter((p) => p.n > 0)
   return (
-    <div className="flex items-center gap-1.5 text-[12px] font-semibold">
-      {blocking > 0 ? (
-        <span className="rounded-md bg-danger-soft px-2 py-0.5 text-danger">
-          {blocking} {dashCopy.conflictsBlocking}
+    <div className="flex items-center gap-3 text-[13px] text-ink-muted">
+      {parts.map((p) => (
+        <span key={p.label} className="flex items-center gap-1.5">
+          <span className={clsx('h-2 w-2 rounded-full', p.dot)} />
+          <span className="font-semibold text-ink">{p.n}</span>
+          {p.label}
         </span>
-      ) : null}
-      {warning > 0 ? (
-        <span className="rounded-md bg-warning-soft px-2 py-0.5 text-warning">
-          {warning} {dashCopy.conflictsWarning}
-        </span>
-      ) : null}
-      {info > 0 ? (
-        <span className="rounded-md bg-neutral-block px-2 py-0.5 text-ink-muted">
-          {info} {dashCopy.conflictsInfo}
-        </span>
-      ) : null}
+      ))}
     </div>
   )
 }
@@ -504,24 +494,41 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
           </div>
         </div>
       </div>
-      {/* Pagination dots: click a dot to jump; active dot stretches into a pill. */}
+      {/* Bottom bar: prev button, pagination dots, next button (left-to-right). */}
       {count > 1 ? (
-        <div className="mt-3 flex shrink-0 items-center justify-center gap-1.5">
-          {items.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              aria-label={`${i + 1}`}
-              onClick={() => go(i - clamped, i > clamped)}
-              className={clsx(
-                'h-2 rounded-full transition-all duration-300',
-                i === clamped ? 'w-5 bg-primary' : 'w-2 bg-line hover:bg-ink-muted'
-              )}
-            />
-          ))}
+        <div dir="ltr" className="mt-3 flex shrink-0 items-center justify-center gap-3">
+          <DeckNavButton glyph="<" disabled={atStart} onClick={() => go(-1, false)} />
+          <div className="flex items-center gap-1.5">
+            {items.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`${i + 1}`}
+                onClick={() => go(i - clamped, i > clamped)}
+                className={clsx(
+                  'h-2 rounded-full transition-all duration-300',
+                  i === clamped ? 'w-5 bg-primary' : 'w-2 bg-line hover:bg-ink-muted'
+                )}
+              />
+            ))}
+          </div>
+          <DeckNavButton glyph=">" disabled={atEnd} onClick={() => go(1, true)} />
         </div>
       ) : null}
     </div>
+  )
+}
+
+function DeckNavButton({ glyph, disabled, onClick }: { glyph: string; disabled: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="focus-ring flex h-7 w-7 items-center justify-center rounded-full border border-line bg-panel-solid text-[15px] font-semibold leading-none text-ink-muted shadow-sm transition-colors hover:bg-neutral-block hover:text-ink disabled:opacity-30 disabled:hover:bg-panel-solid disabled:hover:text-ink-muted"
+    >
+      {glyph}
+    </button>
   )
 }
 
