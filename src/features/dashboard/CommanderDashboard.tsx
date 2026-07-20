@@ -189,7 +189,7 @@ export function CommanderDashboard() {
                   <SwipeDeck
                     items={conflicts}
                     renderItem={(c) => (
-                      <div className="mx-auto w-full max-w-md rounded-xl border border-line bg-panel-solid px-4 py-3 shadow-sm">
+                      <div className="mx-auto w-full max-w-md rounded-xl border border-line/80 bg-panel-solid px-4 py-3">
                         <p className="mb-1.5 text-[16px] font-medium text-ink">{c.title}</p>
                         {c.description ? (
                           <p className="text-[13px] leading-relaxed text-ink-muted">{c.description}</p>
@@ -200,35 +200,38 @@ export function CommanderDashboard() {
                 )}
               </div>
 
-              {/* Draft status — soft state colour fills the whole block; the
-                  severity counts sit inside as thin red/orange chips. */}
+              {/* Draft status — soft state colour + thin state border fill the
+                  whole block; the severity counts sit under the title as thin
+                  red/orange chips. */}
               <div
                 className={clsx(
-                  'flex flex-1 flex-col items-center justify-center gap-2.5 rounded-2xl p-4 text-center transition-colors',
+                  'flex flex-1 flex-col items-center justify-center gap-4 rounded-2xl border p-4 text-center transition-colors',
                   DRAFT_STATE[draftState].panel
                 )}
               >
-                <span className={clsx('text-[15px] font-semibold', DRAFT_STATE[draftState].text)}>
-                  {dashCopy.draftStatusTitle}
-                </span>
-                {blocking > 0 || warning > 0 ? (
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {blocking > 0 ? (
-                      <span className="tnum rounded-lg border border-danger/50 bg-panel-solid/60 px-2.5 py-1 text-[12px] font-semibold text-danger">
-                        {blocking} {dashCopy.conflictsBlocking}
-                      </span>
-                    ) : null}
-                    {warning > 0 ? (
-                      <span className="tnum rounded-lg border border-warning/50 bg-panel-solid/60 px-2.5 py-1 text-[12px] font-semibold text-warning">
-                        {warning} {dashCopy.conflictsWarning}
-                      </span>
-                    ) : null}
-                  </div>
-                ) : (
-                  <span className={clsx('text-[13px] font-medium', DRAFT_STATE[draftState].text)}>
-                    {draftState === 'unstaged' ? dashCopy.draftDiverged : dashCopy.draftPublished}
+                <div className="flex flex-col items-center gap-2">
+                  <span className={clsx('text-[15px] font-semibold', DRAFT_STATE[draftState].text)}>
+                    {dashCopy.draftStatusTitle}
                   </span>
-                )}
+                  {blocking > 0 || warning > 0 ? (
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {blocking > 0 ? (
+                        <span className="tnum rounded-full border border-danger/50 bg-panel-solid px-3 py-1 text-[12px] font-semibold text-danger">
+                          {blocking} {dashCopy.conflictsBlocking}
+                        </span>
+                      ) : null}
+                      {warning > 0 ? (
+                        <span className="tnum rounded-full border border-warning/50 bg-panel-solid px-3 py-1 text-[12px] font-semibold text-warning">
+                          {warning} {dashCopy.conflictsWarning}
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <span className={clsx('text-[13px] font-medium', DRAFT_STATE[draftState].text)}>
+                      {draftState === 'unstaged' ? dashCopy.draftDiverged : dashCopy.draftPublished}
+                    </span>
+                  )}
+                </div>
                 {draftState !== 'ok' ? (
                   <button type="button" onClick={() => navigate('/schedule')} className={chromeButtonClass}>
                     {draftState === 'blocked' ? dashCopy.resolveConflicts : dashCopy.viewChanges}
@@ -255,9 +258,9 @@ export function CommanderDashboard() {
                     : (e.instructorName ?? '')
                   return (
                     // Thin bordered card, centred in the panel.
-                    <div className="mx-auto flex w-full max-w-sm items-center gap-4 rounded-xl border border-line bg-panel-solid p-3 text-start shadow-sm">
+                    <div className="mx-auto flex w-full max-w-sm items-center gap-4 rounded-xl border border-line/80 bg-panel-solid p-3 text-start">
                       {/* Date block — grey/white, not indigo. */}
-                      <div className="flex w-[70px] shrink-0 flex-col items-center justify-center rounded-xl bg-neutral-block py-2">
+                      <div className="flex w-[70px] shrink-0 flex-col items-center justify-center rounded-lg border border-line/70 bg-neutral-block py-2">
                         <span className="tnum text-[30px] font-bold leading-none text-ink">
                           {Number.parseInt(e.date.slice(8, 10), 10)}
                         </span>
@@ -374,11 +377,12 @@ function CountPill({ count }: { count: number }) {
   )
 }
 
-// Draft-status palette: the whole block takes the colour of the current state.
+// Draft-status palette: the whole block takes the colour of the current state,
+// with a thin state-tinted border.
 const DRAFT_STATE = {
-  ok: { panel: 'bg-success-soft', text: 'text-success' },
-  unstaged: { panel: 'bg-warning-soft', text: 'text-warning' },
-  blocked: { panel: 'bg-danger-soft', text: 'text-danger' }
+  ok: { panel: 'border-success/40 bg-success-soft', text: 'text-success' },
+  unstaged: { panel: 'border-warning/40 bg-warning-soft', text: 'text-warning' },
+  blocked: { panel: 'border-danger/40 bg-danger-soft', text: 'text-danger' }
 } as const
 
 /**
