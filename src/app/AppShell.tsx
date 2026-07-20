@@ -53,6 +53,7 @@ const navItems: NavItem[] = [
   { to: '/lecturers', label: nav.guestLecturers, icon: 'guest-lecturer', roles: COMMANDERS },
   { to: '/import', label: nav.excelImport, icon: 'excel-import', roles: COMMANDERS },
   { to: '/conflicts', label: nav.conflictCenter, icon: 'conflict', roles: COMMANDERS },
+  { to: '/confirmations', label: nav.confirmations, icon: 'check', roles: COMMANDERS },
   { to: '/versions', label: nav.versions, icon: 'history', roles: COMMANDERS },
   { to: '/messages', label: nav.messageCenter, icon: 'message-center', roles: COMMANDERS },
   { to: '/admin', label: nav.adminArea, icon: 'admin', roles: ['ADMIN'] },

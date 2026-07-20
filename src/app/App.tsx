@@ -17,6 +17,7 @@ import { PeakDaysPage } from '@/features/peak-days/PeakDaysPage'
 import { GuestLecturersPage } from '@/features/guest-lecturers/GuestLecturersPage'
 import { LecturerConfirmationPage } from '@/features/guest-lecturers/LecturerConfirmationPage'
 import { ConflictCenterPage } from '@/features/conflict-center/ConflictCenterPage'
+import { ChangeReviewPage } from '@/features/change-review/ChangeReviewPage'
 import { MessageCenterPage } from '@/features/message-center/MessageCenterPage'
 import { VersionsPage } from '@/features/versions/VersionsPage'
 import { AdminPage } from '@/features/admin/AdminPage'
@@ -69,6 +70,8 @@ export function App() {
           <Route path="/peak-days" element={<PeakDaysPage />} />
           <Route path="/lecturers" element={<GuestLecturersPage />} />
           <Route path="/conflicts" element={<ConflictCenterPage />} />
+          <Route path="/confirmations" element={<ChangeReviewPage />} />
+          <Route path="/confirmations/:requestId" element={<ChangeReviewPage />} />
           <Route path="/messages" element={<MessageCenterPage />} />
           <Route path="/versions" element={<VersionsPage />} />
           <Route path="/admin" element={<AdminPage />} />

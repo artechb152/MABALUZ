@@ -5,7 +5,7 @@ import { clsx } from 'clsx'
 import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/Button'
-import { buttons, confirmationStatusLabels, conflictSeverityLabels, emptyStates, nav } from '@/lib/hebrewCopy'
+import { buttons, confirmationStatusLabels, emptyStates, nav } from '@/lib/hebrewCopy'
 import {
   useCurrentUser,
   useDraftSchedule,
@@ -17,8 +17,7 @@ import { useNow } from '@/app/useNow'
 import { useSession } from '@/app/sessionStore'
 import { addDaysISO, formatDateHe, todayISO, toMinutes } from '@/lib/time'
 import { detectConflicts } from '@/features/scheduling-engine'
-import { decideOnChange } from '@/data/services/sharedEventService'
-import type { ConflictSeverity, LectureConfirmationStatus, ScheduleEvent } from '@/types'
+import type { LectureConfirmationStatus, ScheduleEvent } from '@/types'
 import { TodayBlock } from './TodayBlock'
 import { dashCopy } from './copy'
 
@@ -35,7 +34,6 @@ export function CommanderDashboard() {
   const draft = useDraftSchedule(training)
   const changeRequests = useDb((s) => s.changeRequests)
   const lecturers = useDb((s) => s.lecturers)
-  const trainings = useDb((s) => s.trainings)
   const lectureDetails = useDb((s) => s.guestLectureDetails)
   const setSoldierPreview = useSession((s) => s.setSoldierPreview)
   const now = useNow()
@@ -141,52 +139,32 @@ export function CommanderDashboard() {
             min-height that fits their content (never clipped); the column
             scrolls if the viewport is too short to grow them all. */}
         <div className="no-scrollbar flex min-h-0 flex-col gap-4 overflow-y-auto">
-          {/* Requests to accept — centred, same size as lectures. */}
-          <DashCard title={dashCopy.commanderRequests} info={dashCopy.infoRequests} className="min-h-[168px] flex-1">
-            {pendingRequests.length === 0 ? (
-              <Centered>
+          {/* Requests to handle — a bounded summary that opens the confirmations
+              screen. Content is fixed-size, so it is always fully visible. */}
+          <DashCard title={dashCopy.commanderRequests} info={dashCopy.infoRequests} className="min-h-[176px] flex-1">
+            <Centered>
+              {pendingRequests.length === 0 ? (
                 <Empty text={dashCopy.noRequests} />
-              </Centered>
-            ) : (
-              // Scroll container + auto margins: the block centres when it fits and
-              // stays fully reachable (no clipped top) when it does not.
-              <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
-                <div className="my-auto flex w-full flex-col items-center gap-4 px-2 py-1">
-                  {pendingRequests.map((r) => {
-                    const from = trainings.find((t) => t.id === r.requestedByTrainingId)?.name ?? ''
-                    const mine = r.approvals.find((a) => a.commanderId === user?.id && a.status === 'PENDING')
-                    return (
-                      <div key={r.id} className="w-full max-w-sm text-center">
-                        <span className="block text-[16px] font-medium leading-snug text-ink">{r.description}</span>
-                        {from ? <span className="mt-1 block text-[13px] text-ink-muted">{from}</span> : null}
-                        {mine ? (
-                          <div className="mt-3 flex flex-wrap justify-center gap-2">
-                            <Button
-                              variant="success"
-                              size="sm"
-                              onClick={() => void decideOnChange(r.id, mine.trainingId, 'APPROVED')}
-                            >
-                              {buttons.approveChange}
-                            </Button>
-                            <Button
-                              variant="danger"
-                              size="sm"
-                              onClick={() => void decideOnChange(r.id, mine.trainingId, 'REJECTED')}
-                            >
-                              {buttons.rejectChange}
-                            </Button>
-                          </div>
-                        ) : null}
-                      </div>
-                    )
-                  })}
+              ) : (
+                <div className="flex w-full max-w-sm flex-col items-center gap-3 px-2 text-center">
+                  <span className="line-clamp-2 text-[15px] font-medium leading-snug text-ink">
+                    {pendingRequests[0].description}
+                  </span>
+                  {pendingRequests.length > 1 ? (
+                    <span className="text-[13px] text-ink-muted">
+                      {dashCopy.morePending(pendingRequests.length - 1)}
+                    </span>
+                  ) : null}
+                  <Button variant="primary" size="sm" onClick={() => navigate('/confirmations')}>
+                    {dashCopy.handleRequests}
+                  </Button>
                 </div>
-              </div>
-            )}
+              )}
+            </Centered>
           </DashCard>
 
           {/* Open conflicts (swipe deck) + draft-status inset panel. */}
-          <div className="card-tex flex min-h-[196px] flex-[1.4] flex-col p-5">
+          <div className="card-tex flex min-h-[184px] flex-[1.4] flex-col p-5">
             <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
               <h2 className="text-[22px] font-semibold text-ink">{dashCopy.openConflictsTitle}</h2>
               <InfoTip text={dashCopy.infoConflicts} />
@@ -203,10 +181,7 @@ export function CommanderDashboard() {
                     items={conflicts}
                     renderItem={(c) => (
                       <div className="mx-auto w-full max-w-md rounded-xl border border-line bg-panel-solid px-4 py-3 shadow-sm">
-                        <div className="mb-1.5 flex flex-wrap items-center justify-center gap-2">
-                          <span className="text-[16px] font-medium text-ink">{c.title}</span>
-                          <SeverityChip severity={c.severity} />
-                        </div>
+                        <p className="mb-1.5 text-[16px] font-medium text-ink">{c.title}</p>
                         {c.description ? (
                           <p className="text-[13px] leading-relaxed text-ink-muted">{c.description}</p>
                         ) : null}
@@ -237,7 +212,7 @@ export function CommanderDashboard() {
           </div>
 
           {/* Closest lectures — one at a time, swipeable, with confirmation status. */}
-          <DashCard title={dashCopy.closestLectures} info={dashCopy.infoLectures} className="min-h-[148px] flex-1">
+          <DashCard title={dashCopy.closestLectures} info={dashCopy.infoLectures} className="min-h-[184px] flex-1">
             {lectures.length === 0 ? (
               <Centered>
                 <Empty text={emptyStates.noUpcomingLectures} />
@@ -247,13 +222,24 @@ export function CommanderDashboard() {
                 items={lectures}
                 renderItem={(e) => {
                   const details = lectureDetails.find((d) => d.eventId === e.id || `${d.eventId}-d` === e.id)
+                  const lecturer = details ? lecturers.find((l) => l.id === details.lecturerId) : undefined
                   return (
-                    <div className="flex flex-col items-center">
-                      <span className="text-[17px] font-medium text-ink">{e.title}</span>
-                      <span className="tnum mt-1 text-[14px] text-ink-muted" dir="ltr">
-                        {formatDateHe(e.date)} · {e.startTime}
-                      </span>
-                      {details ? <StatusChip status={details.confirmationStatus} /> : null}
+                    <div className="mx-auto w-full max-w-sm rounded-2xl border border-line bg-panel-solid p-4 text-start shadow-sm">
+                      <p className="text-[16px] font-semibold leading-snug text-ink">{e.title}</p>
+                      {lecturer ? (
+                        <p className="mt-0.5 truncate text-[13px] text-ink-muted">
+                          {lecturer.fullName}
+                          {lecturer.organization ? ` · ${lecturer.organization}` : ''}
+                        </p>
+                      ) : e.instructorName ? (
+                        <p className="mt-0.5 truncate text-[13px] text-ink-muted">{e.instructorName}</p>
+                      ) : null}
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-2.5">
+                        <span className="tnum text-[13px] font-medium text-ink" dir="ltr">
+                          {formatDateHe(e.date)} · {e.startTime}–{e.endTime}
+                        </span>
+                        {details ? <StatusChip status={details.confirmationStatus} /> : null}
+                      </div>
                     </div>
                   )
                 }}
@@ -410,7 +396,7 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex min-h-0 flex-1 items-stretch gap-2">
-        {count > 1 ? <DeckButton chevron="›" disabled={atEnd} onClick={() => go(1, true)} /> : null}
+        {count > 1 ? <DeckButton chevron=">" disabled={atEnd} onClick={() => go(1, true)} /> : null}
         <div
           className={clsx(
             'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden',
@@ -430,12 +416,12 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
               willChange: 'transform'
             }}
           >
-            <div key={clamped} style={{ animation: `${enter} 0.3s cubic-bezier(0.22, 1, 0.36, 1)` }}>
+            <div key={clamped} style={{ animation: `${enter} 0.42s cubic-bezier(0.22, 1, 0.36, 1)` }}>
               {renderItem(items[clamped])}
             </div>
           </div>
         </div>
-        {count > 1 ? <DeckButton chevron="‹" disabled={atStart} onClick={() => go(-1, false)} /> : null}
+        {count > 1 ? <DeckButton chevron="<" disabled={atStart} onClick={() => go(-1, false)} /> : null}
       </div>
       {count > 1 ? (
         <div className="mt-2 flex shrink-0 items-center justify-center">
@@ -467,20 +453,6 @@ function Empty({ text }: { text: string }) {
   return <p className="t-body text-center text-ink-muted">{text}</p>
 }
 
-function SeverityChip({ severity }: { severity: ConflictSeverity }) {
-  const cls =
-    severity === 'BLOCKING'
-      ? 'bg-danger-soft text-danger'
-      : severity === 'WARNING'
-        ? 'bg-warning-soft text-warning'
-        : 'bg-neutral-block text-ink-muted'
-  return (
-    <span className={clsx('shrink-0 rounded-md px-2 py-0.5 text-[12px] font-medium', cls)}>
-      {conflictSeverityLabels[severity]}
-    </span>
-  )
-}
-
 function StatusChip({ status }: { status: LectureConfirmationStatus }) {
   const cls =
     status === 'CONFIRMED'
@@ -491,7 +463,7 @@ function StatusChip({ status }: { status: LectureConfirmationStatus }) {
           ? 'bg-danger-soft text-danger'
           : 'bg-neutral-block text-ink-muted'
   return (
-    <span className={clsx('mt-2 inline-block rounded-md px-2 py-0.5 text-[12px] font-medium', cls)}>
+    <span className={clsx('inline-block shrink-0 rounded-md px-2 py-0.5 text-[12px] font-medium', cls)}>
       {confirmationStatusLabels[status]}
     </span>
   )

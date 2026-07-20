@@ -268,12 +268,16 @@ body {
     }
   }
 
-  /* Card swaps in a swipe deck: the incoming card slides in from the side
-     opposite the outgoing one, so paging reads like items on a rail. */
+  /* Card swaps in a swipe deck: the incoming card travels in from the side
+     opposite the outgoing one, so paging reads like items on a rail. A short
+     overshoot-free spring keeps it smooth. */
   @keyframes deckInRight {
     from {
       opacity: 0;
-      transform: translateX(34px);
+      transform: translateX(72px);
+    }
+    60% {
+      opacity: 1;
     }
     to {
       opacity: 1;
@@ -283,7 +287,10 @@ body {
   @keyframes deckInLeft {
     from {
       opacity: 0;
-      transform: translateX(-34px);
+      transform: translateX(-72px);
+    }
+    60% {
+      opacity: 1;
     }
     to {
       opacity: 1;

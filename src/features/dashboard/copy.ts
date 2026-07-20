@@ -29,6 +29,8 @@ export const dashCopy = {
   closestLectures: 'הרצאות חוץ קרובות',
   commanderRequests: 'בקשות לטיפול',
   noRequests: 'אין בקשות שממתינות לך כרגע.',
+  handleRequests: 'מעבר לאישור',
+  morePending: (n: number) => `ועוד ${n} בקשות נוספות`,
   openConflictsTitle: 'קונפליקטים פתוחים בטיוטה',
   noOpenConflicts: 'אין קונפליקטים פתוחים בטיוטה.',
   draftStatusTitle: 'מצב הטיוטה',
