@@ -170,7 +170,7 @@ export function CommanderDashboard() {
           </DashCard>
 
           {/* Open conflicts (swipe deck) + draft-status inset panel. */}
-          <div className="card-tex flex min-h-[188px] flex-[1.4] flex-col p-5">
+          <div className="card-tex flex min-h-[224px] flex-[1.5] flex-col p-5">
             <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
               <div className="flex items-center gap-2.5">
                 <CountPill count={conflicts.length} />
@@ -180,7 +180,7 @@ export function CommanderDashboard() {
             </div>
             <div className="flex min-h-0 flex-1 gap-5">
               {/* Conflicts — one at a time, swipeable. */}
-              <div className="flex min-h-0 flex-[1.7] flex-col">
+              <div className="flex min-h-0 flex-[1.2] flex-col">
                 {conflicts.length === 0 ? (
                   <Centered>
                     <Empty text={dashCopy.noOpenConflicts} />
@@ -189,10 +189,10 @@ export function CommanderDashboard() {
                   <SwipeDeck
                     items={conflicts}
                     renderItem={(c) => (
-                      <div className="mx-auto w-full max-w-md rounded-xl border border-line/80 bg-panel-solid px-4 py-3">
+                      <div className="mx-auto w-full max-w-md rounded-2xl border border-line/80 bg-panel-solid px-4 py-3.5">
                         <p className="mb-1.5 text-[16px] font-medium text-ink">{c.title}</p>
                         {c.description ? (
-                          <p className="text-[13px] leading-relaxed text-ink-muted">{c.description}</p>
+                          <p className="line-clamp-2 text-[13px] leading-relaxed text-ink-muted">{c.description}</p>
                         ) : null}
                       </div>
                     )}
@@ -210,24 +210,24 @@ export function CommanderDashboard() {
                 )}
               >
                 <div className="flex flex-col items-center gap-2">
-                  <span className={clsx('text-[15px] font-semibold', DRAFT_STATE[draftState].text)}>
+                  <span className={clsx('text-[14px] font-semibold', DRAFT_STATE[draftState].text)}>
                     {dashCopy.draftStatusTitle}
                   </span>
                   {blocking > 0 || warning > 0 ? (
-                    <div className="flex flex-wrap justify-center gap-2">
+                    <div className="flex flex-wrap justify-center gap-1.5">
                       {blocking > 0 ? (
-                        <span className="tnum rounded-full border border-danger/50 bg-panel-solid px-3 py-1 text-[12px] font-semibold text-danger">
+                        <span className="tnum rounded-full border border-danger/50 bg-panel-solid px-2.5 py-0.5 text-[11px] font-semibold text-danger">
                           {blocking} {dashCopy.conflictsBlocking}
                         </span>
                       ) : null}
                       {warning > 0 ? (
-                        <span className="tnum rounded-full border border-warning/50 bg-panel-solid px-3 py-1 text-[12px] font-semibold text-warning">
+                        <span className="tnum rounded-full border border-warning/50 bg-panel-solid px-2.5 py-0.5 text-[11px] font-semibold text-warning">
                           {warning} {dashCopy.conflictsWarning}
                         </span>
                       ) : null}
                     </div>
                   ) : (
-                    <span className={clsx('text-[13px] font-medium', DRAFT_STATE[draftState].text)}>
+                    <span className={clsx('text-[12px] font-medium', DRAFT_STATE[draftState].text)}>
                       {draftState === 'unstaged' ? dashCopy.draftDiverged : dashCopy.draftPublished}
                     </span>
                   )}
@@ -242,7 +242,7 @@ export function CommanderDashboard() {
           </div>
 
           {/* Closest lectures — one at a time, swipeable, with confirmation status. */}
-          <DashCard title={dashCopy.closestLectures} info={dashCopy.infoLectures} className="min-h-[212px] flex-1">
+          <DashCard title={dashCopy.closestLectures} info={dashCopy.infoLectures} className="min-h-[234px] flex-1">
             {lectures.length === 0 ? (
               <Centered>
                 <Empty text={emptyStates.noUpcomingLectures} />
@@ -258,9 +258,9 @@ export function CommanderDashboard() {
                     : (e.instructorName ?? '')
                   return (
                     // Thin bordered card, centred in the panel.
-                    <div className="mx-auto flex w-full max-w-sm items-center gap-4 rounded-xl border border-line/80 bg-panel-solid p-3 text-start">
+                    <div className="mx-auto flex w-full max-w-sm items-center gap-4 rounded-2xl border border-line/80 bg-panel-solid p-3.5 text-start">
                       {/* Date block — grey/white, not indigo. */}
-                      <div className="flex w-[70px] shrink-0 flex-col items-center justify-center rounded-lg border border-line/70 bg-neutral-block py-2">
+                      <div className="flex w-[70px] shrink-0 flex-col items-center justify-center rounded-xl border border-line/70 bg-neutral-block py-2">
                         <span className="tnum text-[30px] font-bold leading-none text-ink">
                           {Number.parseInt(e.date.slice(8, 10), 10)}
                         </span>
