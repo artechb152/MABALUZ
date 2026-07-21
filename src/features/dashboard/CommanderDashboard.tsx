@@ -106,18 +106,18 @@ export function CommanderDashboard() {
   }
 
   return (
-    // Fills the viewport: the page never scrolls, the columns/cards do.
-    <div className="flex h-full flex-col">
-      {/* Greeting + training name (soldier-view toggle now lives in the navbar). */}
-      <div className="mb-4">
-        <h1 className="t-display">{user ? dashCopy.hello(user.firstName) : nav.dashboard}</h1>
-        <p className="mt-1 text-[18px] font-medium text-ink-muted">{training.name}</p>
-      </div>
+    // Two full-height columns. The greeting sits above the today card only, so
+    // the left panels have no text above them and fill the whole height.
+    <div className="flex h-full flex-col gap-5 xl:flex-row">
+      {/* Right (RTL start): greeting + today's schedule. */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="mb-4 shrink-0">
+          <h1 className="t-display">{user ? dashCopy.hello(user.firstName) : nav.dashboard}</h1>
+          <p className="mt-1 text-[18px] font-medium text-ink-muted">{training.name}</p>
+        </div>
 
-      {/* Today (hero, right) + the panels (left). */}
-      <div className="grid min-h-0 flex-1 gap-5 xl:grid-cols-2">
         {/* Today's published schedule — plain white card. */}
-        <section className="relative flex min-h-0 flex-col rounded-2xl border border-line bg-panel-solid p-6 shadow-card">
+        <section className="relative flex min-h-0 flex-1 flex-col rounded-2xl border border-line bg-panel-solid p-6 shadow-card">
           <header className="mb-4 flex items-center justify-between gap-2">
             <h2 className="t-display text-[22px]">{dashCopy.todaySchedule}</h2>
             <InfoTip text={dashCopy.infoToday} />
@@ -136,11 +136,11 @@ export function CommanderDashboard() {
             )}
           </div>
         </section>
+      </div>
 
-        {/* Left column — requests / conflicts+draft / lectures. Cards keep a
-            min-height that fits their content (never clipped); the column
-            scrolls if the viewport is too short to grow them all. */}
-        <div className="no-scrollbar flex min-h-0 flex-col gap-4 overflow-y-auto">
+      {/* Left (RTL end): the panels — full height, nothing above them, so they
+          can be larger and breathe. */}
+      <div className="no-scrollbar flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto">
           {/* Requests to handle — a swipe deck like conflicts/lectures. Tapping a
               card does nothing; the header button opens the full confirmations
               screen, and each card's small button opens that specific request. */}
@@ -231,33 +231,23 @@ export function CommanderDashboard() {
                   red/orange chips. */}
               <div
                 className={clsx(
-                  'flex flex-1 flex-col items-center justify-center gap-4 rounded-2xl border p-4 text-center transition-colors',
+                  'flex flex-1 flex-col items-center justify-center gap-4 rounded-2xl border p-5 text-center transition-colors',
                   DRAFT_STATE[draftState].panel
                 )}
               >
-                <div className="flex flex-col items-center gap-2">
-                  <span className={clsx('text-[14px] font-semibold', DRAFT_STATE[draftState].text)}>
-                    {dashCopy.draftStatusTitle}
+                <span className={clsx('text-[15px] font-semibold', DRAFT_STATE[draftState].text)}>
+                  {dashCopy.draftStatusTitle}
+                </span>
+                {blocking > 0 || warning > 0 ? (
+                  <div className="flex w-full max-w-[190px] flex-col gap-2">
+                    {blocking > 0 ? <StatTag tone="danger" n={blocking} label={dashCopy.conflictsBlocking} /> : null}
+                    {warning > 0 ? <StatTag tone="warning" n={warning} label={dashCopy.conflictsWarning} /> : null}
+                  </div>
+                ) : (
+                  <span className={clsx('text-[13px] font-medium', DRAFT_STATE[draftState].text)}>
+                    {draftState === 'unstaged' ? dashCopy.draftDiverged : dashCopy.draftPublished}
                   </span>
-                  {blocking > 0 || warning > 0 ? (
-                    <div className="flex flex-wrap justify-center gap-1.5">
-                      {blocking > 0 ? (
-                        <span className="tnum rounded-full border border-danger/50 bg-panel-solid px-2.5 py-0.5 text-[11px] font-semibold text-danger">
-                          {blocking} {dashCopy.conflictsBlocking}
-                        </span>
-                      ) : null}
-                      {warning > 0 ? (
-                        <span className="tnum rounded-full border border-warning/50 bg-panel-solid px-2.5 py-0.5 text-[11px] font-semibold text-warning">
-                          {warning} {dashCopy.conflictsWarning}
-                        </span>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <span className={clsx('text-[12px] font-medium', DRAFT_STATE[draftState].text)}>
-                      {draftState === 'unstaged' ? dashCopy.draftDiverged : dashCopy.draftPublished}
-                    </span>
-                  )}
-                </div>
+                )}
                 {draftState !== 'ok' ? (
                   <button type="button" onClick={() => navigate('/schedule')} className={chromeButtonClass}>
                     {draftState === 'blocked' ? dashCopy.resolveConflicts : dashCopy.viewChanges}
@@ -320,7 +310,6 @@ export function CommanderDashboard() {
           </DashCard>
         </div>
       </div>
-    </div>
   )
 }
 
@@ -408,6 +397,21 @@ function CountPill({ count }: { count: number }) {
   return (
     <span className="tnum flex h-7 min-w-7 items-center justify-center rounded-full bg-neutral-block px-2 text-[15px] font-semibold text-ink-muted">
       {count}
+    </span>
+  )
+}
+
+/** A labelled severity row for the draft-status block: "label ........ N". */
+function StatTag({ tone, n, label }: { tone: 'danger' | 'warning'; n: number; label: string }) {
+  return (
+    <span
+      className={clsx(
+        'flex items-center justify-between gap-2 rounded-xl border bg-panel-solid px-3 py-1.5',
+        tone === 'danger' ? 'border-danger/40 text-danger' : 'border-warning/40 text-warning'
+      )}
+    >
+      <span className="text-[13px] font-medium">{label}</span>
+      <span className="tnum text-[16px] font-bold leading-none">{n}</span>
     </span>
   )
 }
