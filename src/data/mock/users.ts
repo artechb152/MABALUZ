@@ -57,6 +57,34 @@ export const mockUsers: User[] = [
     updatedAt: SEED_TIME
   },
   {
+    id: 'user-commander-eran',
+    personalNumber: '9000023',
+    firstName: 'ערן',
+    lastName: 'ביטון',
+    displayName: 'סגן ערן ביטון',
+    role: 'TRAINING_COMMANDER',
+    email: 'eran.biton@example.org',
+    phone: '050-0000023',
+    unit: 'מערך ההדרכה',
+    profileStatus: 'ACTIVE',
+    createdAt: SEED_TIME,
+    updatedAt: SEED_TIME
+  },
+  {
+    id: 'user-commander-tamar',
+    personalNumber: '9000024',
+    firstName: 'תמר',
+    lastName: 'דהן',
+    displayName: 'סגן תמר דהן',
+    role: 'TRAINING_COMMANDER',
+    email: 'tamar.dahan@example.org',
+    phone: '050-0000024',
+    unit: 'מערך ההדרכה',
+    profileStatus: 'ACTIVE',
+    createdAt: SEED_TIME,
+    updatedAt: SEED_TIME
+  },
+  {
     id: 'user-senior-daniel',
     personalNumber: '9000031',
     firstName: 'דניאל',

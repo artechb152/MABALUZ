@@ -115,9 +115,8 @@ export function CommanderDashboard() {
     // Two full-height columns. The greeting sits above the today card only, so
     // the left panels have no text above them and fill the whole height.
     <div className="flex h-full flex-col gap-5 xl:flex-row">
-      {/* Right (RTL start): greeting + today's schedule (kept narrower so the
-          left panels have more room). */}
-      <div className="flex min-h-0 min-w-0 flex-[0.72] flex-col">
+      {/* Right (RTL start): greeting + today's schedule. */}
+      <div className="flex min-h-0 min-w-0 flex-[0.85] flex-col">
         <div className="mb-4 shrink-0">
           <h1 className="t-display">{user ? dashCopy.hello(user.firstName) : nav.dashboard}</h1>
           <p className="mt-1 text-[18px] font-medium text-ink-muted">{training.name}</p>
@@ -173,23 +172,21 @@ export function CommanderDashboard() {
                 renderItem={(r) => {
                   const from = trainings.find((t) => t.id === r.requestedByTrainingId)?.name ?? ''
                   return (
-                    <div className="mx-auto flex h-full w-full max-w-lg flex-col justify-center gap-2.5 rounded-2xl border border-line/80 bg-panel-solid px-5 py-3.5 text-start">
-                      <p className="line-clamp-2 text-[18px] font-medium leading-snug text-ink">{r.description}</p>
-                      <div className="flex items-center justify-between gap-2">
-                        {from ? (
-                          <span className="truncate text-[14px] text-ink-muted">{from}</span>
-                        ) : (
-                          <span />
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/confirmations/${r.id}`)}
-                          className={clsx(deckLinkClass, 'shrink-0 text-[14px]')}
-                        >
-                          {dashCopy.reviewRequest}
-                          <Icon name="chevron-down" size={15} className="rotate-90" />
-                        </button>
+                    <div className="mx-auto flex h-full w-full max-w-lg flex-col rounded-2xl border border-line/80 bg-panel-solid px-5 py-3.5 text-start">
+                      <div className="flex min-h-0 flex-1 flex-col justify-center gap-1.5">
+                        <p className="line-clamp-2 text-[18px] font-medium leading-snug text-ink">
+                          {r.description}
+                        </p>
+                        {from ? <span className="truncate text-[14px] text-ink-muted">{from}</span> : null}
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/confirmations/${r.id}`)}
+                        className={clsx(deckLinkClass, 'self-end text-[14px]')}
+                      >
+                        {dashCopy.reviewRequest}
+                        <Icon name="chevron-down" size={15} className="rotate-90" />
+                      </button>
                     </div>
                   )
                 }}
@@ -248,7 +245,7 @@ export function CommanderDashboard() {
                   red/orange chips. */}
               <div
                 className={clsx(
-                  'flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border p-4 text-center transition-colors',
+                  'flex flex-1 flex-col items-center justify-start gap-3 rounded-2xl border p-4 text-center transition-colors',
                   DRAFT_STATE[draftState].panel
                 )}
               >
@@ -302,35 +299,37 @@ export function CommanderDashboard() {
                     : (e.instructorName ?? '')
                   return (
                     // Fills the panel; content centred, larger text.
-                    <div className="mx-auto flex h-full w-full max-w-lg items-center gap-4 rounded-2xl border border-line/80 bg-panel-solid p-3.5 text-start">
-                      {/* Date block — grey/white, not indigo. */}
-                      <div className="flex w-[76px] shrink-0 flex-col items-center justify-center rounded-xl border border-line/70 bg-neutral-block py-2">
-                        <span className="tnum text-[34px] font-bold leading-none text-ink">
-                          {Number.parseInt(e.date.slice(8, 10), 10)}
-                        </span>
-                        <span className="mt-1 text-[14px] font-medium leading-none text-ink-muted">
-                          {hebrewMonths[Number.parseInt(e.date.slice(5, 7), 10) - 1]}
-                        </span>
-                      </div>
-                      {/* Details */}
-                      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-                        <p className="truncate text-[18px] font-semibold text-ink">{e.title}</p>
-                        {subtitle ? <p className="truncate text-[14px] text-ink-muted">{subtitle}</p> : null}
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="tnum text-[16px] font-semibold text-ink" dir="ltr">
-                            {e.startTime}–{e.endTime}
+                    <div className="mx-auto flex h-full w-full max-w-lg flex-col rounded-2xl border border-line/80 bg-panel-solid p-3.5 text-start">
+                      <div className="flex min-h-0 flex-1 items-center gap-4">
+                        {/* Date block — grey/white, not indigo. */}
+                        <div className="flex w-[76px] shrink-0 flex-col items-center justify-center rounded-xl border border-line/70 bg-neutral-block py-2">
+                          <span className="tnum text-[34px] font-bold leading-none text-ink">
+                            {Number.parseInt(e.date.slice(8, 10), 10)}
                           </span>
-                          {details ? <StatusChip status={details.confirmationStatus} /> : null}
-                          <button
-                            type="button"
-                            onClick={() => navigate('/lecturers')}
-                            className={clsx(deckLinkClass, 'ms-auto text-[14px]')}
-                          >
-                            {dashCopy.manage}
-                            <Icon name="chevron-down" size={15} className="rotate-90" />
-                          </button>
+                          <span className="mt-1 text-[14px] font-medium leading-none text-ink-muted">
+                            {hebrewMonths[Number.parseInt(e.date.slice(5, 7), 10) - 1]}
+                          </span>
+                        </div>
+                        {/* Details */}
+                        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+                          <p className="truncate text-[18px] font-semibold text-ink">{e.title}</p>
+                          {subtitle ? <p className="truncate text-[14px] text-ink-muted">{subtitle}</p> : null}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="tnum text-[16px] font-semibold text-ink" dir="ltr">
+                              {e.startTime}–{e.endTime}
+                            </span>
+                            {details ? <StatusChip status={details.confirmationStatus} /> : null}
+                          </div>
                         </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/lecturers')}
+                        className={clsx(deckLinkClass, 'self-end text-[14px]')}
+                      >
+                        {dashCopy.manage}
+                        <Icon name="chevron-down" size={15} className="rotate-90" />
+                      </button>
                     </div>
                   )
                 }}

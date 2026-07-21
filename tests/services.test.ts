@@ -29,11 +29,9 @@ describe('role-scoped training visibility', () => {
     expect(trainings.map((t) => t.id)).toEqual([TRAINING_INTEL_ID])
   })
 
-  it('training commander sees the trainings they command', async () => {
+  it('training commander is assigned to exactly one training', async () => {
     const trainings = await trainingService.listTrainingsForUser(commanderNoam)
-    expect(trainings.map((t) => t.id).sort()).toEqual(
-      [TRAINING_CONTROL_ID, TRAINING_CYBER_ID, TRAINING_INTEL_ID].sort()
-    )
+    expect(trainings.map((t) => t.id)).toEqual([TRAINING_INTEL_ID])
   })
 
   it('senior commander sees all managed trainings', async () => {
