@@ -32,6 +32,7 @@ export function CommanderDashboard() {
   const published = usePublishedSchedule(training)
   const draft = useDraftSchedule(training)
   const changeRequests = useDb((s) => s.changeRequests)
+  const trainings = useDb((s) => s.trainings)
   const lecturers = useDb((s) => s.lecturers)
   const lectureDetails = useDb((s) => s.guestLectureDetails)
   const now = useNow()
@@ -140,32 +141,43 @@ export function CommanderDashboard() {
             min-height that fits their content (never clipped); the column
             scrolls if the viewport is too short to grow them all. */}
         <div className="no-scrollbar flex min-h-0 flex-col gap-4 overflow-y-auto">
-          {/* Requests to handle — a compact, fixed-height summary that opens the
-              confirmations screen. Kept small so the column never scrolls. */}
+          {/* Requests to handle — a swipe deck like conflicts/lectures; tapping a
+              request opens its confirmation screen. */}
           <DashCard
             title={dashCopy.commanderRequests}
             info={dashCopy.infoRequests}
             count={pendingRequests.length}
-            className="min-h-[132px] flex-none p-4"
+            className="min-h-[224px] flex-1 p-5"
           >
-            <Centered>
-              {pendingRequests.length === 0 ? (
+            {pendingRequests.length === 0 ? (
+              <Centered>
                 <Empty text={dashCopy.noRequests} />
-              ) : (
-                <div className="flex w-full items-center justify-between gap-3">
-                  <span className="line-clamp-2 min-w-0 flex-1 text-start text-[14px] font-medium leading-snug text-ink">
-                    {pendingRequests[0].description}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/confirmations')}
-                    className={clsx(chromeButtonClass, 'shrink-0')}
-                  >
-                    {dashCopy.handleRequests}
-                  </button>
-                </div>
-              )}
-            </Centered>
+              </Centered>
+            ) : (
+              <SwipeDeck
+                items={pendingRequests}
+                onItemActivate={(i) => navigate(`/confirmations/${pendingRequests[i].id}`)}
+                renderItem={(r) => {
+                  const from = trainings.find((t) => t.id === r.requestedByTrainingId)?.name ?? ''
+                  return (
+                    <div className="mx-auto w-full max-w-md rounded-2xl border border-line/80 bg-panel-solid px-4 py-3 text-start">
+                      <p className="line-clamp-2 text-[15px] font-medium leading-snug text-ink">{r.description}</p>
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        {from ? (
+                          <span className="truncate text-[12px] text-ink-muted">{from}</span>
+                        ) : (
+                          <span />
+                        )}
+                        <span className="inline-flex shrink-0 items-center gap-0.5 text-[12px] font-semibold text-primary-hover">
+                          {dashCopy.reviewRequest}
+                          <Icon name="chevron-down" size={14} className="rotate-90" />
+                        </span>
+                      </div>
+                    </div>
+                  )
+                }}
+              />
+            )}
           </DashCard>
 
           {/* Open conflicts (swipe deck) + draft-status inset panel. */}
@@ -390,7 +402,15 @@ const DRAFT_STATE = {
  * leftward swipe goes back. The drag has velocity flicks, rubber-band resistance
  * at the ends, and a spring settle.
  */
-function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T) => ReactNode }) {
+function SwipeDeck<T>({
+  items,
+  renderItem,
+  onItemActivate
+}: {
+  items: T[]
+  renderItem: (item: T) => ReactNode
+  onItemActivate?: (index: number) => void
+}) {
   const [index, setIndex] = useState(0)
   const [enterRight, setEnterRight] = useState(true)
   const [dragX, setDragX] = useState(0)
@@ -400,6 +420,7 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
   const lastX = useRef(0)
   const lastT = useRef(0)
   const velocity = useRef(0)
+  const moved = useRef(false)
 
   const count = items.length
   const clamped = count === 0 ? 0 : Math.min(index, count - 1)
@@ -424,12 +445,15 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
     lastX.current = e.clientX
     lastT.current = e.timeStamp
     velocity.current = 0
+    moved.current = false
     setDragging(true)
     e.currentTarget.setPointerCapture(e.pointerId)
   }
   const onMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (startX.current === null) return
-    setDragX(e.clientX - startX.current)
+    const dx = e.clientX - startX.current
+    if (Math.abs(dx) > 6) moved.current = true
+    setDragX(dx)
     const dt = e.timeStamp - lastT.current
     if (dt > 0) velocity.current = (e.clientX - lastX.current) / dt
     lastX.current = e.clientX
@@ -448,9 +472,10 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
       if ((flick ? v : dx) > 0) go(-1, false)
       else go(1, true)
     } else {
-      // Did not cross the threshold: spring back to centre.
+      // Did not cross the threshold: spring back, and treat a still tap as a click.
       setSnapping(true)
       setDragX(0)
+      if (!moved.current) onItemActivate?.(clamped)
     }
   }
 
@@ -464,12 +489,14 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
       <div
         className={clsx(
           'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden',
-          count > 1 && 'cursor-grab touch-none select-none active:cursor-grabbing'
+          count > 1 && 'cursor-grab touch-none select-none active:cursor-grabbing',
+          count <= 1 && onItemActivate && 'cursor-pointer'
         )}
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}
         onPointerCancel={onUp}
+        onClick={count <= 1 && onItemActivate ? () => onItemActivate(clamped) : undefined}
       >
         <div
           className="w-full px-2 text-center"

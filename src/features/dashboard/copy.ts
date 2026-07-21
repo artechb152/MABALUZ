@@ -30,6 +30,7 @@ export const dashCopy = {
   commanderRequests: 'בקשות לטיפול',
   noRequests: 'אין בקשות שממתינות לך כרגע.',
   handleRequests: 'מעבר לאישור',
+  reviewRequest: 'בדיקה ואישור',
   morePending: (n: number) => `ועוד ${n} בקשות נוספות`,
   openConflictsTitle: 'קונפליקטים פתוחים בטיוטה',
   noOpenConflicts: 'אין קונפליקטים פתוחים בטיוטה.',
