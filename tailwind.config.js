@@ -24,15 +24,18 @@ module.exports = {
         // as tinted cream, never a saturated fill — blocks stay the only vivid color.
         danger: {
           DEFAULT: '#C81D4B',
-          soft: 'rgba(200,29,75,0.06)'
+          soft: 'rgba(200,29,75,0.06)',
+          tint: '#F8E4E9' // opaque light fill (for solid state blocks)
         },
         warning: {
           DEFAULT: '#CC4800',
-          soft: 'rgba(204,72,0,0.06)'
+          soft: 'rgba(204,72,0,0.06)',
+          tint: '#F9E9E0'
         },
         success: {
           DEFAULT: '#0F766E',
-          soft: 'rgba(15,118,110,0.07)'
+          soft: 'rgba(15,118,110,0.07)',
+          tint: '#E2EEED'
         },
         graphite: '#474C57',
         stone: '#C2C7D2',

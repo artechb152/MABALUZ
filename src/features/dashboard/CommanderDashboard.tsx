@@ -115,8 +115,9 @@ export function CommanderDashboard() {
     // Two full-height columns. The greeting sits above the today card only, so
     // the left panels have no text above them and fill the whole height.
     <div className="flex h-full flex-col gap-5 xl:flex-row">
-      {/* Right (RTL start): greeting + today's schedule (a touch narrower). */}
-      <div className="flex min-h-0 min-w-0 flex-[0.88] flex-col">
+      {/* Right (RTL start): greeting + today's schedule (kept narrower so the
+          left panels have more room). */}
+      <div className="flex min-h-0 min-w-0 flex-[0.72] flex-col">
         <div className="mb-4 shrink-0">
           <h1 className="t-display">{user ? dashCopy.hello(user.firstName) : nav.dashboard}</h1>
           <p className="mt-1 text-[18px] font-medium text-ink-muted">{training.name}</p>
@@ -182,9 +183,10 @@ export function CommanderDashboard() {
                         <button
                           type="button"
                           onClick={() => navigate(`/confirmations/${r.id}`)}
-                          className={clsx(chromeButtonSm, 'shrink-0')}
+                          className={clsx(deckLinkClass, 'shrink-0')}
                         >
                           {dashCopy.reviewRequest}
+                          <Icon name="chevron-down" size={14} className="rotate-90" />
                         </button>
                       </div>
                     </div>
@@ -437,12 +439,12 @@ function StatTag({ tone, n, label }: { tone: 'danger' | 'warning'; n: number; la
   )
 }
 
-// Draft-status palette: the whole block takes the colour of the current state,
-// with a thin state-tinted border.
+// Draft-status palette: the whole block takes a solid (opaque) state fill with a
+// thin state-tinted border.
 const DRAFT_STATE = {
-  ok: { panel: 'border-success/40 bg-success-soft', text: 'text-success' },
-  unstaged: { panel: 'border-warning/40 bg-warning-soft', text: 'text-warning' },
-  blocked: { panel: 'border-danger/40 bg-danger-soft', text: 'text-danger' }
+  ok: { panel: 'border-success/40 bg-success-tint', text: 'text-success' },
+  unstaged: { panel: 'border-warning/40 bg-warning-tint', text: 'text-warning' },
+  blocked: { panel: 'border-danger/40 bg-danger-tint', text: 'text-danger' }
 } as const
 
 /**
