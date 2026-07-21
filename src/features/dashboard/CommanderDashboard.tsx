@@ -164,6 +164,7 @@ export function CommanderDashboard() {
             ) : (
               <SwipeDeck
                 items={pendingRequests}
+                fill
                 footer={
                   <button type="button" onClick={() => navigate('/confirmations')} className={chromeButtonSm}>
                     {dashCopy.allRequests}
@@ -172,21 +173,21 @@ export function CommanderDashboard() {
                 renderItem={(r) => {
                   const from = trainings.find((t) => t.id === r.requestedByTrainingId)?.name ?? ''
                   return (
-                    <div className="mx-auto w-full max-w-md rounded-2xl border border-line/80 bg-panel-solid px-4 py-3 text-start">
-                      <p className="line-clamp-2 text-[16px] font-medium leading-snug text-ink">{r.description}</p>
-                      <div className="mt-2.5 flex items-center justify-between gap-2">
+                    <div className="mx-auto flex h-full w-full max-w-lg flex-col justify-center gap-2.5 rounded-2xl border border-line/80 bg-panel-solid px-5 py-3.5 text-start">
+                      <p className="line-clamp-2 text-[18px] font-medium leading-snug text-ink">{r.description}</p>
+                      <div className="flex items-center justify-between gap-2">
                         {from ? (
-                          <span className="truncate text-[13px] text-ink-muted">{from}</span>
+                          <span className="truncate text-[14px] text-ink-muted">{from}</span>
                         ) : (
                           <span />
                         )}
                         <button
                           type="button"
                           onClick={() => navigate(`/confirmations/${r.id}`)}
-                          className={clsx(deckLinkClass, 'shrink-0')}
+                          className={clsx(deckLinkClass, 'shrink-0 text-[14px]')}
                         >
                           {dashCopy.reviewRequest}
-                          <Icon name="chevron-down" size={14} className="rotate-90" />
+                          <Icon name="chevron-down" size={15} className="rotate-90" />
                         </button>
                       </div>
                     </div>
@@ -287,6 +288,7 @@ export function CommanderDashboard() {
             ) : (
               <SwipeDeck
                 items={lectures}
+                fill
                 footer={
                   <button type="button" onClick={() => navigate('/lecturers')} className={chromeButtonSm}>
                     {dashCopy.allLectures}
@@ -299,33 +301,33 @@ export function CommanderDashboard() {
                     ? [lecturer.fullName, lecturer.organization].filter(Boolean).join(' · ')
                     : (e.instructorName ?? '')
                   return (
-                    // Thin bordered card, centred in the panel.
-                    <div className="mx-auto flex w-full max-w-sm items-center gap-3.5 rounded-2xl border border-line/80 bg-panel-solid p-3 text-start">
+                    // Fills the panel; content centred, larger text.
+                    <div className="mx-auto flex h-full w-full max-w-lg items-center gap-4 rounded-2xl border border-line/80 bg-panel-solid p-3.5 text-start">
                       {/* Date block — grey/white, not indigo. */}
-                      <div className="flex w-[66px] shrink-0 flex-col items-center justify-center rounded-xl border border-line/70 bg-neutral-block py-2">
-                        <span className="tnum text-[28px] font-bold leading-none text-ink">
+                      <div className="flex w-[76px] shrink-0 flex-col items-center justify-center rounded-xl border border-line/70 bg-neutral-block py-2">
+                        <span className="tnum text-[34px] font-bold leading-none text-ink">
                           {Number.parseInt(e.date.slice(8, 10), 10)}
                         </span>
-                        <span className="mt-1 text-[13px] font-medium leading-none text-ink-muted">
+                        <span className="mt-1 text-[14px] font-medium leading-none text-ink-muted">
                           {hebrewMonths[Number.parseInt(e.date.slice(5, 7), 10) - 1]}
                         </span>
                       </div>
                       {/* Details */}
                       <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-                        <p className="truncate text-[16px] font-semibold text-ink">{e.title}</p>
-                        {subtitle ? <p className="truncate text-[13px] text-ink-muted">{subtitle}</p> : null}
+                        <p className="truncate text-[18px] font-semibold text-ink">{e.title}</p>
+                        {subtitle ? <p className="truncate text-[14px] text-ink-muted">{subtitle}</p> : null}
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="tnum text-[15px] font-semibold text-ink" dir="ltr">
+                          <span className="tnum text-[16px] font-semibold text-ink" dir="ltr">
                             {e.startTime}–{e.endTime}
                           </span>
                           {details ? <StatusChip status={details.confirmationStatus} /> : null}
                           <button
                             type="button"
                             onClick={() => navigate('/lecturers')}
-                            className={clsx(deckLinkClass, 'ms-auto')}
+                            className={clsx(deckLinkClass, 'ms-auto text-[14px]')}
                           >
                             {dashCopy.manage}
-                            <Icon name="chevron-down" size={14} className="rotate-90" />
+                            <Icon name="chevron-down" size={15} className="rotate-90" />
                           </button>
                         </div>
                       </div>
@@ -456,11 +458,15 @@ const DRAFT_STATE = {
 function SwipeDeck<T>({
   items,
   renderItem,
-  footer
+  footer,
+  fill
 }: {
   items: T[]
   renderItem: (item: T) => ReactNode
   footer?: ReactNode
+  // fill: the current card stretches to fill the whole deck area (large card,
+  // content centred inside) instead of hugging its content.
+  fill?: boolean
 }) {
   const [index, setIndex] = useState(0)
   const [enterRight, setEnterRight] = useState(true)
@@ -547,7 +553,8 @@ function SwipeDeck<T>({
     <div className="flex min-h-0 flex-1 flex-col">
       <div
         className={clsx(
-          'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden',
+          'relative flex min-h-0 flex-1 overflow-hidden',
+          fill ? 'items-stretch' : 'items-center justify-center',
           count > 1 && 'cursor-grab touch-none select-none active:cursor-grabbing'
         )}
         onPointerDown={onDown}
@@ -556,7 +563,7 @@ function SwipeDeck<T>({
         onPointerCancel={onUp}
       >
         <div
-          className="w-full px-2 text-center"
+          className={clsx('w-full px-2', fill ? 'flex flex-col' : 'text-center')}
           style={{
             transform: `translateX(${resisted}px) scale(${dragging ? 0.985 : 1})`,
             transition: dragging || !snapping ? 'none' : 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
@@ -564,7 +571,11 @@ function SwipeDeck<T>({
             willChange: 'transform'
           }}
         >
-          <div key={clamped} style={{ animation: `${enter} 0.42s cubic-bezier(0.22, 1, 0.36, 1)` }}>
+          <div
+            key={clamped}
+            className={clsx(fill && 'flex min-h-0 flex-1')}
+            style={{ animation: `${enter} 0.42s cubic-bezier(0.22, 1, 0.36, 1)` }}
+          >
             {renderItem(items[clamped])}
           </div>
         </div>
