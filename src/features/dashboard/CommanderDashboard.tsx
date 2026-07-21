@@ -115,8 +115,8 @@ export function CommanderDashboard() {
     // Two full-height columns. The greeting sits above the today card only, so
     // the left panels have no text above them and fill the whole height.
     <div className="flex h-full flex-col gap-5 xl:flex-row">
-      {/* Right (RTL start): greeting + today's schedule. */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      {/* Right (RTL start): greeting + today's schedule (a touch narrower). */}
+      <div className="flex min-h-0 min-w-0 flex-[0.88] flex-col">
         <div className="mb-4 shrink-0">
           <h1 className="t-display">{user ? dashCopy.hello(user.firstName) : nav.dashboard}</h1>
           <p className="mt-1 text-[18px] font-medium text-ink-muted">{training.name}</p>
@@ -154,7 +154,7 @@ export function CommanderDashboard() {
             title={dashCopy.commanderRequests}
             info={dashCopy.infoRequests}
             count={pendingRequests.length}
-            className="min-h-[264px] flex-1 p-5"
+            className="min-h-[220px] flex-1 p-4"
           >
             {pendingRequests.length === 0 ? (
               <Centered>
@@ -171,9 +171,9 @@ export function CommanderDashboard() {
                 renderItem={(r) => {
                   const from = trainings.find((t) => t.id === r.requestedByTrainingId)?.name ?? ''
                   return (
-                    <div className="mx-auto w-full max-w-md rounded-2xl border border-line/80 bg-panel-solid px-4 py-3.5 text-start">
+                    <div className="mx-auto w-full max-w-md rounded-2xl border border-line/80 bg-panel-solid px-4 py-3 text-start">
                       <p className="line-clamp-2 text-[16px] font-medium leading-snug text-ink">{r.description}</p>
-                      <div className="mt-3 flex items-center justify-between gap-2">
+                      <div className="mt-2.5 flex items-center justify-between gap-2">
                         {from ? (
                           <span className="truncate text-[13px] text-ink-muted">{from}</span>
                         ) : (
@@ -195,11 +195,11 @@ export function CommanderDashboard() {
           </DashCard>
 
           {/* Open conflicts (swipe deck) + draft-status inset panel. */}
-          <div className="card-tex flex min-h-[264px] flex-1 flex-col p-5">
-            <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
+          <div className="card-tex flex min-h-[220px] flex-1 flex-col p-4">
+            <div className="mb-2 flex shrink-0 items-start justify-between gap-2">
               <div className="flex items-center gap-2.5">
                 <CountPill count={conflicts.length} />
-                <h2 className="text-[22px] font-semibold text-ink">{dashCopy.openConflictsTitle}</h2>
+                <h2 className="text-[21px] font-semibold text-ink">{dashCopy.openConflictsTitle}</h2>
               </div>
               <InfoTip text={dashCopy.infoConflicts} />
             </div>
@@ -216,7 +216,7 @@ export function CommanderDashboard() {
                     renderItem={(c) => (
                       <div
                         className={clsx(
-                          'mx-auto w-full max-w-md rounded-2xl border-2 bg-panel-solid px-4 py-3',
+                          'mx-auto w-full max-w-md rounded-2xl border-2 bg-panel-solid px-4 py-2.5',
                           c.severity === 'BLOCKING'
                             ? 'border-danger/45'
                             : c.severity === 'WARNING'
@@ -224,11 +224,11 @@ export function CommanderDashboard() {
                               : 'border-line/80'
                         )}
                       >
-                        <p className="mb-1 text-[17px] font-medium text-ink">{c.title}</p>
+                        <p className="truncate text-[16px] font-medium text-ink">{c.title}</p>
                         {c.description ? (
-                          <p className="line-clamp-2 text-[14px] leading-relaxed text-ink-muted">{c.description}</p>
+                          <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-ink-muted">{c.description}</p>
                         ) : null}
-                        <div className="mt-2 flex justify-end">
+                        <div className="mt-1.5 flex justify-end">
                           <button type="button" onClick={() => navigate('/conflicts')} className={deckLinkClass}>
                             {dashCopy.manage}
                             <Icon name="chevron-down" size={14} className="rotate-90" />
@@ -276,7 +276,7 @@ export function CommanderDashboard() {
             title={dashCopy.closestLectures}
             info={dashCopy.infoLectures}
             count={lectures.length}
-            className="min-h-[264px] flex-1 p-5"
+            className="min-h-[220px] flex-1 p-4"
           >
             {lectures.length === 0 ? (
               <Centered>
@@ -298,34 +298,34 @@ export function CommanderDashboard() {
                     : (e.instructorName ?? '')
                   return (
                     // Thin bordered card, centred in the panel.
-                    <div className="mx-auto w-full max-w-sm rounded-2xl border border-line/80 bg-panel-solid p-3.5 text-start">
-                      <div className="flex items-center gap-4">
-                        {/* Date block — grey/white, not indigo. */}
-                        <div className="flex w-[74px] shrink-0 flex-col items-center justify-center rounded-xl border border-line/70 bg-neutral-block py-2.5">
-                          <span className="tnum text-[32px] font-bold leading-none text-ink">
-                            {Number.parseInt(e.date.slice(8, 10), 10)}
-                          </span>
-                          <span className="mt-1 text-[14px] font-medium leading-none text-ink-muted">
-                            {hebrewMonths[Number.parseInt(e.date.slice(5, 7), 10) - 1]}
-                          </span>
-                        </div>
-                        {/* Details — larger, filling the space. */}
-                        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
-                          <p className="truncate text-[18px] font-semibold text-ink">{e.title}</p>
-                          {subtitle ? <p className="truncate text-[14px] text-ink-muted">{subtitle}</p> : null}
-                          <div className="mt-0.5 flex flex-wrap items-center gap-2">
-                            <span className="tnum text-[16px] font-semibold text-ink" dir="ltr">
-                              {e.startTime}–{e.endTime}
-                            </span>
-                            {details ? <StatusChip status={details.confirmationStatus} /> : null}
-                          </div>
-                        </div>
+                    <div className="mx-auto flex w-full max-w-sm items-center gap-3.5 rounded-2xl border border-line/80 bg-panel-solid p-3 text-start">
+                      {/* Date block — grey/white, not indigo. */}
+                      <div className="flex w-[66px] shrink-0 flex-col items-center justify-center rounded-xl border border-line/70 bg-neutral-block py-2">
+                        <span className="tnum text-[28px] font-bold leading-none text-ink">
+                          {Number.parseInt(e.date.slice(8, 10), 10)}
+                        </span>
+                        <span className="mt-1 text-[13px] font-medium leading-none text-ink-muted">
+                          {hebrewMonths[Number.parseInt(e.date.slice(5, 7), 10) - 1]}
+                        </span>
                       </div>
-                      <div className="mt-1.5 flex justify-end">
-                        <button type="button" onClick={() => navigate('/lecturers')} className={deckLinkClass}>
-                          {dashCopy.manage}
-                          <Icon name="chevron-down" size={14} className="rotate-90" />
-                        </button>
+                      {/* Details */}
+                      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+                        <p className="truncate text-[16px] font-semibold text-ink">{e.title}</p>
+                        {subtitle ? <p className="truncate text-[13px] text-ink-muted">{subtitle}</p> : null}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="tnum text-[15px] font-semibold text-ink" dir="ltr">
+                            {e.startTime}–{e.endTime}
+                          </span>
+                          {details ? <StatusChip status={details.confirmationStatus} /> : null}
+                          <button
+                            type="button"
+                            onClick={() => navigate('/lecturers')}
+                            className={clsx(deckLinkClass, 'ms-auto')}
+                          >
+                            {dashCopy.manage}
+                            <Icon name="chevron-down" size={14} className="rotate-90" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )
@@ -401,10 +401,10 @@ function DashCard(props: {
 }) {
   return (
     <div className={clsx('card-tex flex flex-col', props.className)}>
-      <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
+      <div className="mb-2 flex shrink-0 items-start justify-between gap-2">
         <div className="flex items-center gap-2.5">
           {props.count != null ? <CountPill count={props.count} /> : null}
-          <h2 className="text-[22px] font-semibold text-ink">{props.title}</h2>
+          <h2 className="text-[21px] font-semibold text-ink">{props.title}</h2>
         </div>
         <InfoTip text={props.info} />
       </div>
@@ -569,7 +569,7 @@ function SwipeDeck<T>({
       </div>
       {/* Bottom bar: pagination controls (centred) + an optional footer action. */}
       {count > 1 || footer ? (
-        <div className="mt-3 flex shrink-0 items-center gap-2">
+        <div className="mt-2 flex shrink-0 items-center gap-2">
           <div className="flex flex-1 justify-start">{footer}</div>
           {count > 1 ? (
             <div dir="ltr" className="flex items-center gap-2.5">
