@@ -141,12 +141,24 @@ export function CommanderDashboard() {
             min-height that fits their content (never clipped); the column
             scrolls if the viewport is too short to grow them all. */}
         <div className="no-scrollbar flex min-h-0 flex-col gap-4 overflow-y-auto">
-          {/* Requests to handle — a swipe deck like conflicts/lectures; tapping a
-              request opens its confirmation screen. */}
+          {/* Requests to handle — a swipe deck like conflicts/lectures. Tapping a
+              card does nothing; the header button opens the full confirmations
+              screen, and each card's small button opens that specific request. */}
           <DashCard
             title={dashCopy.commanderRequests}
             info={dashCopy.infoRequests}
             count={pendingRequests.length}
+            action={
+              pendingRequests.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/confirmations')}
+                  className="focus-ring rounded-lg px-2.5 py-1 text-[13px] font-medium text-ink-muted transition-colors hover:bg-neutral-block hover:text-ink"
+                >
+                  {dashCopy.allRequests}
+                </button>
+              ) : null
+            }
             className="min-h-[224px] flex-1 p-5"
           >
             {pendingRequests.length === 0 ? (
@@ -156,22 +168,25 @@ export function CommanderDashboard() {
             ) : (
               <SwipeDeck
                 items={pendingRequests}
-                onItemActivate={(i) => navigate(`/confirmations/${pendingRequests[i].id}`)}
                 renderItem={(r) => {
                   const from = trainings.find((t) => t.id === r.requestedByTrainingId)?.name ?? ''
                   return (
                     <div className="mx-auto w-full max-w-md rounded-2xl border border-line/80 bg-panel-solid px-4 py-3 text-start">
                       <p className="line-clamp-2 text-[15px] font-medium leading-snug text-ink">{r.description}</p>
-                      <div className="mt-2 flex items-center justify-between gap-2">
+                      <div className="mt-2.5 flex items-center justify-between gap-2">
                         {from ? (
                           <span className="truncate text-[12px] text-ink-muted">{from}</span>
                         ) : (
                           <span />
                         )}
-                        <span className="inline-flex shrink-0 items-center gap-0.5 text-[12px] font-semibold text-primary-hover">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/confirmations/${r.id}`)}
+                          className="focus-ring inline-flex shrink-0 items-center gap-0.5 rounded-lg border border-primary/30 bg-primary-soft px-2.5 py-1 text-[12px] font-semibold text-primary-hover transition-colors hover:bg-primary-soft/70"
+                        >
                           {dashCopy.reviewRequest}
-                          <Icon name="chevron-down" size={14} className="rotate-90" />
-                        </span>
+                          <Icon name="chevron-down" size={13} className="rotate-90" />
+                        </button>
                       </div>
                     </div>
                   )
@@ -253,7 +268,12 @@ export function CommanderDashboard() {
           </div>
 
           {/* Closest lectures — one at a time, swipeable, with confirmation status. */}
-          <DashCard title={dashCopy.closestLectures} info={dashCopy.infoLectures} className="min-h-[226px] flex-1 p-5">
+          <DashCard
+            title={dashCopy.closestLectures}
+            info={dashCopy.infoLectures}
+            count={lectures.length}
+            className="min-h-[226px] flex-1 p-5"
+          >
             {lectures.length === 0 ? (
               <Centered>
                 <Empty text={emptyStates.noUpcomingLectures} />
@@ -362,6 +382,7 @@ function DashCard(props: {
   title: string
   info: string
   count?: number
+  action?: ReactNode
   className?: string
   children: ReactNode
 }) {
@@ -372,7 +393,10 @@ function DashCard(props: {
           {props.count != null ? <CountPill count={props.count} /> : null}
           <h2 className="text-[22px] font-semibold text-ink">{props.title}</h2>
         </div>
-        <InfoTip text={props.info} />
+        <div className="flex shrink-0 items-center gap-1.5">
+          {props.action}
+          <InfoTip text={props.info} />
+        </div>
       </div>
       <div className="flex min-h-0 flex-1 flex-col">{props.children}</div>
     </div>
@@ -402,15 +426,7 @@ const DRAFT_STATE = {
  * leftward swipe goes back. The drag has velocity flicks, rubber-band resistance
  * at the ends, and a spring settle.
  */
-function SwipeDeck<T>({
-  items,
-  renderItem,
-  onItemActivate
-}: {
-  items: T[]
-  renderItem: (item: T) => ReactNode
-  onItemActivate?: (index: number) => void
-}) {
+function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T) => ReactNode }) {
   const [index, setIndex] = useState(0)
   const [enterRight, setEnterRight] = useState(true)
   const [dragX, setDragX] = useState(0)
@@ -420,7 +436,7 @@ function SwipeDeck<T>({
   const lastX = useRef(0)
   const lastT = useRef(0)
   const velocity = useRef(0)
-  const moved = useRef(false)
+  const capturing = useRef(false)
 
   const count = items.length
   const clamped = count === 0 ? 0 : Math.min(index, count - 1)
@@ -445,26 +461,35 @@ function SwipeDeck<T>({
     lastX.current = e.clientX
     lastT.current = e.timeStamp
     velocity.current = 0
-    moved.current = false
-    setDragging(true)
-    e.currentTarget.setPointerCapture(e.pointerId)
+    capturing.current = false
+    // Capture only once a real drag starts (see onMove), so taps on the inner
+    // buttons still fire their native click instead of being swallowed.
   }
   const onMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (startX.current === null) return
     const dx = e.clientX - startX.current
-    if (Math.abs(dx) > 6) moved.current = true
-    setDragX(dx)
-    const dt = e.timeStamp - lastT.current
-    if (dt > 0) velocity.current = (e.clientX - lastX.current) / dt
+    if (!capturing.current && Math.abs(dx) > 6) {
+      capturing.current = true
+      setDragging(true)
+      e.currentTarget.setPointerCapture(e.pointerId)
+    }
+    if (capturing.current) {
+      setDragX(dx)
+      const dt = e.timeStamp - lastT.current
+      if (dt > 0) velocity.current = (e.clientX - lastX.current) / dt
+    }
     lastX.current = e.clientX
     lastT.current = e.timeStamp
   }
   const onUp = () => {
     if (startX.current === null) return
+    const wasDragging = capturing.current
     const dx = dragX
     const v = velocity.current
     startX.current = null
+    capturing.current = false
     setDragging(false)
+    if (!wasDragging) return // a tap, not a drag — let inner buttons handle the click
     const flick = Math.abs(v) > 0.4
     if (Math.abs(dx) > 8 && (Math.abs(dx) > 56 || flick)) {
       // Gallery convention: drag right -> previous card slides in from the left;
@@ -472,10 +497,9 @@ function SwipeDeck<T>({
       if ((flick ? v : dx) > 0) go(-1, false)
       else go(1, true)
     } else {
-      // Did not cross the threshold: spring back, and treat a still tap as a click.
+      // Did not cross the threshold: spring back to centre.
       setSnapping(true)
       setDragX(0)
-      if (!moved.current) onItemActivate?.(clamped)
     }
   }
 
@@ -489,14 +513,12 @@ function SwipeDeck<T>({
       <div
         className={clsx(
           'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden',
-          count > 1 && 'cursor-grab touch-none select-none active:cursor-grabbing',
-          count <= 1 && onItemActivate && 'cursor-pointer'
+          count > 1 && 'cursor-grab touch-none select-none active:cursor-grabbing'
         )}
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}
         onPointerCancel={onUp}
-        onClick={count <= 1 && onItemActivate ? () => onItemActivate(clamped) : undefined}
       >
         <div
           className="w-full px-2 text-center"
