@@ -19,7 +19,8 @@ export const conflictCopy = {
   helpInfoTitle: 'מידע',
   helpInfo: 'הערה שאינה חוסמת — למשל פרט חסר אצל מרצה חוץ.',
   helpGotIt: 'הבנתי',
-  helpDontShow: 'אל תציג שוב'
+  helpDontShow: 'אל תציג שוב',
+  helpReopen: 'הסבר'
 } as const
 
 export const versionsCopy = {

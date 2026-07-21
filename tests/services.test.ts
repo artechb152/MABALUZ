@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '@/app/dbStore'
 import { mockUsers } from '@/data/mock/users'
-import { TRAINING_INTEL_ID, TRAINING_OPS_ID } from '@/data/mock/trainings'
+import {
+  TRAINING_CONTROL_ID,
+  TRAINING_CYBER_ID,
+  TRAINING_INTEL_ID,
+  TRAINING_OPS_ID
+} from '@/data/mock/trainings'
 import * as trainingService from '@/data/services/trainingService'
 import * as scheduleService from '@/data/services/scheduleService'
 import * as lecturerService from '@/data/services/lecturerService'
@@ -24,14 +29,18 @@ describe('role-scoped training visibility', () => {
     expect(trainings.map((t) => t.id)).toEqual([TRAINING_INTEL_ID])
   })
 
-  it('training commander sees only their training', async () => {
+  it('training commander sees the trainings they command', async () => {
     const trainings = await trainingService.listTrainingsForUser(commanderNoam)
-    expect(trainings.map((t) => t.id)).toEqual([TRAINING_INTEL_ID])
+    expect(trainings.map((t) => t.id).sort()).toEqual(
+      [TRAINING_CONTROL_ID, TRAINING_CYBER_ID, TRAINING_INTEL_ID].sort()
+    )
   })
 
   it('senior commander sees all managed trainings', async () => {
     const trainings = await trainingService.listTrainingsForUser(senior)
-    expect(trainings.map((t) => t.id).sort()).toEqual([TRAINING_INTEL_ID, TRAINING_OPS_ID])
+    expect(trainings.map((t) => t.id).sort()).toEqual(
+      [TRAINING_CONTROL_ID, TRAINING_CYBER_ID, TRAINING_INTEL_ID, TRAINING_OPS_ID].sort()
+    )
   })
 
   it('admin sees everything', async () => {

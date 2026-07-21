@@ -7,7 +7,12 @@ import type {
   SharedEventGroup
 } from '@/types'
 import { addDaysISO, dayOfWeek, daysBetween, timeRangesOverlap, toMinutes, todayISO } from '@/lib/time'
-import { TRAINING_INTEL_ID, TRAINING_OPS_ID } from './trainings'
+import {
+  TRAINING_CONTROL_ID,
+  TRAINING_CYBER_ID,
+  TRAINING_INTEL_ID,
+  TRAINING_OPS_ID
+} from './trainings'
 
 const SEED_TIME = '2026-01-01T08:00:00.000Z'
 const today = todayISO()
@@ -506,6 +511,33 @@ const intelDraftConflicts: ScheduleEvent[] = [
     date: nextWorkdayISO(addDaysISO(today, 3)),
     startTime: '10:30',
     endTime: '11:30'
+  }),
+  // Guest lecture booked on the full-day peak day -> BLOCKING (peak vs lecture).
+  makeEvent({
+    trainingId: TRAINING_INTEL_ID,
+    scheduleId: 'schedule-intel-draft',
+    title: 'הרצאת חוץ: סייבר התקפי',
+    type: 'GUEST_LECTURE',
+    flexibilityLevel: 'LOCKED_GUEST_LECTURE',
+    date: peakDayDate,
+    startTime: '10:00',
+    endTime: '11:30',
+    isLocked: true,
+    lockReason: 'מועד מתואם עם המרצה',
+    lecturerId: 'lecturer-roni-shalev',
+    instructorName: 'סא״ל (מיל׳) רוני שלו',
+    location: 'אולם הרצאות'
+  }),
+  // A late block that runs past activity hours -> WARNING (outside the window).
+  makeEvent({
+    trainingId: TRAINING_INTEL_ID,
+    scheduleId: 'schedule-intel-draft',
+    title: 'סיכום יום מורחב',
+    type: 'FLEXIBLE_CONTENT',
+    flexibilityLevel: 'FLEXIBLE',
+    date: nextWorkdayISO(addDaysISO(today, 2)),
+    startTime: '20:30',
+    endTime: '21:30'
   })
 ]
 
@@ -528,6 +560,68 @@ const intelDraftEvents = [
   intelDraftLecture1,
   intelDraftLecture2,
   ...intelDraftConflicts
+]
+
+// --- Two extra trainings for the same commander (picker smoke-test) ----------
+const controlPubEvents = buildBaseWeekEvents(
+  TRAINING_CONTROL_ID,
+  addDaysISO(today, -3),
+  addDaysISO(today, 18),
+  intelTitles
+)
+const controlDraftEvents = [
+  ...cloneAsDraft(controlPubEvents, 'schedule-control-draft'),
+  // Locked review over base content -> a single WARNING (unpublished changes).
+  makeEvent({
+    trainingId: TRAINING_CONTROL_ID,
+    scheduleId: 'schedule-control-draft',
+    title: 'ביקורת מטה',
+    type: 'CUSTOM',
+    flexibilityLevel: 'SEMI_FLEXIBLE',
+    date: nextWorkdayISO(addDaysISO(today, 2)),
+    startTime: '09:00',
+    endTime: '10:30',
+    isLocked: true,
+    lockReason: 'מועד קבוע'
+  })
+]
+
+const cyberPubEvents = buildBaseWeekEvents(
+  TRAINING_CYBER_ID,
+  addDaysISO(today, -1),
+  addDaysISO(today, 25),
+  opsTitles
+)
+const cyberConflictDate = nextWorkdayISO(addDaysISO(today, 2))
+const cyberDraftEvents = [
+  ...cloneAsDraft(cyberPubEvents, 'schedule-cyber-draft'),
+  // Two locked items overlapping -> BLOCKING (red draft status when switched to).
+  makeEvent({
+    trainingId: TRAINING_CYBER_ID,
+    scheduleId: 'schedule-cyber-draft',
+    title: 'הרצאת חוץ: הצפנה מתקדמת',
+    type: 'GUEST_LECTURE',
+    flexibilityLevel: 'LOCKED_GUEST_LECTURE',
+    date: cyberConflictDate,
+    startTime: '10:00',
+    endTime: '11:30',
+    isLocked: true,
+    lockReason: 'מועד מתואם עם המרצה',
+    instructorName: 'ד״ר עמית ברק',
+    location: 'אולם הרצאות'
+  }),
+  makeEvent({
+    trainingId: TRAINING_CYBER_ID,
+    scheduleId: 'schedule-cyber-draft',
+    title: 'תרגיל צוותי מרוכז',
+    type: 'CUSTOM',
+    flexibilityLevel: 'SEMI_FLEXIBLE',
+    date: cyberConflictDate,
+    startTime: '10:45',
+    endTime: '12:00',
+    isLocked: true,
+    lockReason: 'מועד קבוע'
+  })
 ]
 
 export const mockSchedules: Schedule[] = [
@@ -589,6 +683,50 @@ export const mockSchedules: Schedule[] = [
     generatedFromImportIds: [],
     createdAt: SEED_TIME,
     updatedAt: SEED_TIME
+  },
+  {
+    id: 'schedule-control-pub',
+    trainingId: TRAINING_CONTROL_ID,
+    versionNumber: 1,
+    status: 'PUBLISHED',
+    events: controlPubEvents.map((e) => ({ ...e, scheduleId: 'schedule-control-pub' })),
+    generatedFromImportIds: [],
+    publishedAt: '2026-07-01T09:00:00.000Z',
+    publishedBy: 'user-commander-noam',
+    createdAt: SEED_TIME,
+    updatedAt: SEED_TIME
+  },
+  {
+    id: 'schedule-control-draft',
+    trainingId: TRAINING_CONTROL_ID,
+    versionNumber: 2,
+    status: 'DRAFT',
+    events: controlDraftEvents,
+    generatedFromImportIds: [],
+    createdAt: SEED_TIME,
+    updatedAt: SEED_TIME
+  },
+  {
+    id: 'schedule-cyber-pub',
+    trainingId: TRAINING_CYBER_ID,
+    versionNumber: 1,
+    status: 'PUBLISHED',
+    events: cyberPubEvents.map((e) => ({ ...e, scheduleId: 'schedule-cyber-pub' })),
+    generatedFromImportIds: [],
+    publishedAt: '2026-07-02T09:00:00.000Z',
+    publishedBy: 'user-commander-noam',
+    createdAt: SEED_TIME,
+    updatedAt: SEED_TIME
+  },
+  {
+    id: 'schedule-cyber-draft',
+    trainingId: TRAINING_CYBER_ID,
+    versionNumber: 2,
+    status: 'DRAFT',
+    events: cyberDraftEvents,
+    generatedFromImportIds: [],
+    createdAt: SEED_TIME,
+    updatedAt: SEED_TIME
   }
 ]
 
@@ -610,7 +748,7 @@ export const mockSharedGroups: SharedEventGroup[] = [
       [TRAINING_INTEL_ID]: intel.sharedEventId,
       [TRAINING_OPS_ID]: ops.sharedEventId
     },
-    pendingChangeRequestIds: ['screq-1', 'screq-2', 'screq-3']
+    pendingChangeRequestIds: ['screq-1', 'screq-2', 'screq-3', 'screq-4', 'screq-5']
   }
 ]
 
@@ -663,6 +801,32 @@ export const mockChangeRequests: SharedEventChangeRequest[] = [
     newStartTime: '10:15',
     newEndTime: '12:00',
     approvals: pendingFromOps('screq-3'),
+    status: 'PENDING'
+  },
+  {
+    id: 'screq-4',
+    groupId: SHARED_SAFETY_GROUP_ID,
+    requestedByUserId: 'user-commander-shira',
+    requestedByTrainingId: TRAINING_OPS_ID,
+    requestedAt: '2026-07-09T09:30:00.000Z',
+    description: 'קיצור הרצאת הבטיחות לשעה אחת בלבד',
+    newDate: sharedLectureDate,
+    newStartTime: '10:15',
+    newEndTime: '11:15',
+    approvals: pendingFromOps('screq-4'),
+    status: 'PENDING'
+  },
+  {
+    id: 'screq-5',
+    groupId: SHARED_SAFETY_GROUP_ID,
+    requestedByUserId: 'user-commander-shira',
+    requestedByTrainingId: TRAINING_OPS_ID,
+    requestedAt: '2026-07-10T15:00:00.000Z',
+    description: 'העברת הרצאת הבטיחות לשעות אחר הצהריים המאוחרות',
+    newDate: sharedLectureDate,
+    newStartTime: '16:30',
+    newEndTime: '18:15',
+    approvals: pendingFromOps('screq-5'),
     status: 'PENDING'
   }
 ]

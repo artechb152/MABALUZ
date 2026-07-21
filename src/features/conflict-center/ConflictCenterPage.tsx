@@ -170,10 +170,20 @@ export function ConflictCenterPage() {
         title={nav.conflictCenter}
         subtitle={training.name}
         actions={
-          <div className="flex items-center gap-2 text-sm">
-            <Badge tone="danger">{counts.blocking} {conflictSeverityLabels.BLOCKING}</Badge>
-            <Badge tone="warning">{counts.warning} {conflictSeverityLabels.WARNING}</Badge>
-            <Badge tone="neutral">{counts.info} {conflictSeverityLabels.INFO}</Badge>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-sm">
+              <Badge tone="danger">{counts.blocking} {conflictSeverityLabels.BLOCKING}</Badge>
+              <Badge tone="warning">{counts.warning} {conflictSeverityLabels.WARNING}</Badge>
+              <Badge tone="neutral">{counts.info} {conflictSeverityLabels.INFO}</Badge>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowHelp(true)}
+              className="focus-ring inline-flex items-center gap-1.5 rounded-xl border border-line bg-panel-solid px-3 py-1.5 text-[13px] font-medium text-ink-muted shadow-sm transition-colors hover:bg-neutral-block hover:text-ink"
+            >
+              <Icon name="faq" size={16} />
+              {conflictCopy.helpReopen}
+            </button>
           </div>
         }
       />

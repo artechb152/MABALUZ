@@ -27,6 +27,9 @@ const chromeButtonClass =
 // Same chrome design, sized to sit inside a card / card header.
 const chromeButtonSm =
   'focus-ring rounded-xl border border-line bg-panel-solid px-3.5 py-1.5 text-[14px] font-medium text-ink-muted shadow-sm transition-colors hover:bg-neutral-block hover:text-ink active:bg-primary-soft active:text-primary-hover'
+// Subtle in-card "go to manage" link used on the conflict/lecture deck cards.
+const deckLinkClass =
+  'focus-ring inline-flex items-center gap-0.5 rounded-lg px-2 py-1 text-[13px] font-semibold text-primary-hover transition-colors hover:bg-primary-soft'
 
 export function CommanderDashboard() {
   const navigate = useNavigate()
@@ -151,14 +154,7 @@ export function CommanderDashboard() {
             title={dashCopy.commanderRequests}
             info={dashCopy.infoRequests}
             count={pendingRequests.length}
-            action={
-              pendingRequests.length > 0 ? (
-                <button type="button" onClick={() => navigate('/confirmations')} className={chromeButtonSm}>
-                  {dashCopy.allRequests}
-                </button>
-              ) : null
-            }
-            className="min-h-[252px] flex-1 p-5"
+            className="min-h-[264px] flex-1 p-5"
           >
             {pendingRequests.length === 0 ? (
               <Centered>
@@ -167,6 +163,11 @@ export function CommanderDashboard() {
             ) : (
               <SwipeDeck
                 items={pendingRequests}
+                footer={
+                  <button type="button" onClick={() => navigate('/confirmations')} className={chromeButtonSm}>
+                    {dashCopy.allRequests}
+                  </button>
+                }
                 renderItem={(r) => {
                   const from = trainings.find((t) => t.id === r.requestedByTrainingId)?.name ?? ''
                   return (
@@ -194,7 +195,7 @@ export function CommanderDashboard() {
           </DashCard>
 
           {/* Open conflicts (swipe deck) + draft-status inset panel. */}
-          <div className="card-tex flex min-h-[252px] flex-1 flex-col p-5">
+          <div className="card-tex flex min-h-[264px] flex-1 flex-col p-5">
             <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
               <div className="flex items-center gap-2.5">
                 <CountPill count={conflicts.length} />
@@ -215,7 +216,7 @@ export function CommanderDashboard() {
                     renderItem={(c) => (
                       <div
                         className={clsx(
-                          'mx-auto w-full max-w-md rounded-2xl border-2 bg-panel-solid px-4 py-3.5',
+                          'mx-auto w-full max-w-md rounded-2xl border-2 bg-panel-solid px-4 py-3',
                           c.severity === 'BLOCKING'
                             ? 'border-danger/45'
                             : c.severity === 'WARNING'
@@ -223,10 +224,16 @@ export function CommanderDashboard() {
                               : 'border-line/80'
                         )}
                       >
-                        <p className="mb-1.5 text-[17px] font-medium text-ink">{c.title}</p>
+                        <p className="mb-1 text-[17px] font-medium text-ink">{c.title}</p>
                         {c.description ? (
                           <p className="line-clamp-2 text-[14px] leading-relaxed text-ink-muted">{c.description}</p>
                         ) : null}
+                        <div className="mt-2 flex justify-end">
+                          <button type="button" onClick={() => navigate('/conflicts')} className={deckLinkClass}>
+                            {dashCopy.manage}
+                            <Icon name="chevron-down" size={14} className="rotate-90" />
+                          </button>
+                        </div>
                       </div>
                     )}
                   />
@@ -269,7 +276,7 @@ export function CommanderDashboard() {
             title={dashCopy.closestLectures}
             info={dashCopy.infoLectures}
             count={lectures.length}
-            className="min-h-[252px] flex-1 p-5"
+            className="min-h-[264px] flex-1 p-5"
           >
             {lectures.length === 0 ? (
               <Centered>
@@ -278,6 +285,11 @@ export function CommanderDashboard() {
             ) : (
               <SwipeDeck
                 items={lectures}
+                footer={
+                  <button type="button" onClick={() => navigate('/lecturers')} className={chromeButtonSm}>
+                    {dashCopy.allLectures}
+                  </button>
+                }
                 renderItem={(e) => {
                   const details = lectureDetails.find((d) => d.eventId === e.id || `${d.eventId}-d` === e.id)
                   const lecturer = details ? lecturers.find((l) => l.id === details.lecturerId) : undefined
@@ -286,28 +298,34 @@ export function CommanderDashboard() {
                     : (e.instructorName ?? '')
                   return (
                     // Thin bordered card, centred in the panel.
-                    <div className="mx-auto flex w-full max-w-sm items-center gap-4 rounded-2xl border border-line/80 bg-panel-solid p-3.5 text-start">
-                      {/* Date block — grey/white, not indigo. */}
-                      <div className="flex w-[74px] shrink-0 flex-col items-center justify-center rounded-xl border border-line/70 bg-neutral-block py-2.5">
-                        <span className="tnum text-[32px] font-bold leading-none text-ink">
-                          {Number.parseInt(e.date.slice(8, 10), 10)}
-                        </span>
-                        <span className="mt-1 text-[14px] font-medium leading-none text-ink-muted">
-                          {hebrewMonths[Number.parseInt(e.date.slice(5, 7), 10) - 1]}
-                        </span>
-                      </div>
-                      {/* Details — larger, filling the space. */}
-                      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
-                        <p className="truncate text-[18px] font-semibold text-ink">{e.title}</p>
-                        {subtitle ? (
-                          <p className="truncate text-[14px] text-ink-muted">{subtitle}</p>
-                        ) : null}
-                        <div className="mt-0.5 flex flex-wrap items-center gap-2">
-                          <span className="tnum text-[16px] font-semibold text-ink" dir="ltr">
-                            {e.startTime}–{e.endTime}
+                    <div className="mx-auto w-full max-w-sm rounded-2xl border border-line/80 bg-panel-solid p-3.5 text-start">
+                      <div className="flex items-center gap-4">
+                        {/* Date block — grey/white, not indigo. */}
+                        <div className="flex w-[74px] shrink-0 flex-col items-center justify-center rounded-xl border border-line/70 bg-neutral-block py-2.5">
+                          <span className="tnum text-[32px] font-bold leading-none text-ink">
+                            {Number.parseInt(e.date.slice(8, 10), 10)}
                           </span>
-                          {details ? <StatusChip status={details.confirmationStatus} /> : null}
+                          <span className="mt-1 text-[14px] font-medium leading-none text-ink-muted">
+                            {hebrewMonths[Number.parseInt(e.date.slice(5, 7), 10) - 1]}
+                          </span>
                         </div>
+                        {/* Details — larger, filling the space. */}
+                        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
+                          <p className="truncate text-[18px] font-semibold text-ink">{e.title}</p>
+                          {subtitle ? <p className="truncate text-[14px] text-ink-muted">{subtitle}</p> : null}
+                          <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                            <span className="tnum text-[16px] font-semibold text-ink" dir="ltr">
+                              {e.startTime}–{e.endTime}
+                            </span>
+                            {details ? <StatusChip status={details.confirmationStatus} /> : null}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-1.5 flex justify-end">
+                        <button type="button" onClick={() => navigate('/lecturers')} className={deckLinkClass}>
+                          {dashCopy.manage}
+                          <Icon name="chevron-down" size={14} className="rotate-90" />
+                        </button>
                       </div>
                     </div>
                   )
@@ -333,7 +351,7 @@ function InfoTip({ text }: { text: string }) {
     const el = ref.current
     if (!el) return
     const r = el.getBoundingClientRect()
-    const width = 240
+    const width = 340
     const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8))
     setPos({ top: r.bottom + 8, left })
   }
@@ -359,11 +377,11 @@ function InfoTip({ text }: { text: string }) {
                 position: 'fixed',
                 top: pos.top,
                 left: pos.left,
-                width: 240,
+                width: 340,
                 zIndex: 9999,
                 animation: 'fadeSlideIn 0.14s ease'
               }}
-              className="pointer-events-none rounded-xl border border-line bg-white px-3.5 py-2.5 text-start text-[13px] font-normal leading-relaxed text-black shadow-lg"
+              className="pointer-events-none rounded-2xl border border-line bg-white px-5 py-4 text-start text-[15px] font-normal leading-relaxed text-black shadow-pop"
             >
               {text}
             </span>,
@@ -378,7 +396,6 @@ function DashCard(props: {
   title: string
   info: string
   count?: number
-  action?: ReactNode
   className?: string
   children: ReactNode
 }) {
@@ -389,10 +406,7 @@ function DashCard(props: {
           {props.count != null ? <CountPill count={props.count} /> : null}
           <h2 className="text-[22px] font-semibold text-ink">{props.title}</h2>
         </div>
-        <div className="flex shrink-0 items-center gap-1.5">
-          {props.action}
-          <InfoTip text={props.info} />
-        </div>
+        <InfoTip text={props.info} />
       </div>
       <div className="flex min-h-0 flex-1 flex-col">{props.children}</div>
     </div>
@@ -437,7 +451,15 @@ const DRAFT_STATE = {
  * leftward swipe goes back. The drag has velocity flicks, rubber-band resistance
  * at the ends, and a spring settle.
  */
-function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T) => ReactNode }) {
+function SwipeDeck<T>({
+  items,
+  renderItem,
+  footer
+}: {
+  items: T[]
+  renderItem: (item: T) => ReactNode
+  footer?: ReactNode
+}) {
   const [index, setIndex] = useState(0)
   const [enterRight, setEnterRight] = useState(true)
   const [dragX, setDragX] = useState(0)
@@ -545,25 +567,32 @@ function SwipeDeck<T>({ items, renderItem }: { items: T[]; renderItem: (item: T)
           </div>
         </div>
       </div>
-      {/* Bottom bar: prev button, pagination dots, next button (left-to-right). */}
-      {count > 1 ? (
-        <div dir="ltr" className="mt-3 flex shrink-0 items-center justify-center gap-2.5">
-          <DeckNavButton dir="prev" disabled={atStart} onClick={() => go(-1, false)} />
-          <div className="flex items-center gap-1.5">
-            {items.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                aria-label={`${i + 1}`}
-                onClick={() => go(i - clamped, i > clamped)}
-                className={clsx(
-                  'h-2 rounded-full transition-all duration-300',
-                  i === clamped ? 'w-5 bg-primary' : 'w-2 bg-line hover:bg-ink-muted'
-                )}
-              />
-            ))}
-          </div>
-          <DeckNavButton dir="next" disabled={atEnd} onClick={() => go(1, true)} />
+      {/* Bottom bar: pagination controls (centred) + an optional footer action. */}
+      {count > 1 || footer ? (
+        <div className="mt-3 flex shrink-0 items-center gap-2">
+          <div className="flex flex-1 justify-start">{footer}</div>
+          {count > 1 ? (
+            <div dir="ltr" className="flex items-center gap-2.5">
+              <DeckNavButton dir="prev" disabled={atStart} onClick={() => go(-1, false)} />
+              <div className="flex items-center gap-1.5">
+                {items.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    aria-label={`${i + 1}`}
+                    onClick={() => go(i - clamped, i > clamped)}
+                    className={clsx(
+                      'h-2 rounded-full transition-all duration-300',
+                      i === clamped ? 'w-5 bg-primary' : 'w-2 bg-line hover:bg-ink-muted'
+                    )}
+                  />
+                ))}
+              </div>
+              <DeckNavButton dir="next" disabled={atEnd} onClick={() => go(1, true)} />
+            </div>
+          ) : null}
+          {/* Balancing spacer so the pagination stays centred. */}
+          <div className="flex-1" />
         </div>
       ) : null}
     </div>

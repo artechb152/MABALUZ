@@ -32,6 +32,8 @@ export const dashCopy = {
   handleRequests: 'מעבר לאישור',
   reviewRequest: 'בדיקה ואישור',
   allRequests: 'כל הבקשות',
+  allLectures: 'כל ההרצאות',
+  manage: 'לניהול',
   morePending: (n: number) => `ועוד ${n} בקשות נוספות`,
   openConflictsTitle: 'קונפליקטים פתוחים בטיוטה',
   noOpenConflicts: 'אין קונפליקטים פתוחים בטיוטה.',
