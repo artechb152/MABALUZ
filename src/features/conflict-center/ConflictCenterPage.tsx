@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/Button'
 import { Badge } from '@/components/Badge'
+import { Icon } from '@/assets/icons/Icon'
 import {
   buttons,
   conflictCenter,
@@ -23,12 +24,33 @@ import { conflictCopy } from './copy'
 
 const severityTone = { BLOCKING: 'danger', WARNING: 'warning', INFO: 'neutral' } as const
 
+// UI preference only (not app data): remembers "don't show the explainer again".
+const CONFLICT_HELP_KEY = 'mabaluz.conflicts-help.hidden'
+
 export function ConflictCenterPage() {
   const navigate = useNavigate()
   const training = useSelectedTraining()
   const draft = useDraftSchedule(training)
   const lecturers = useDb((s) => s.lecturers)
   const [feedback, setFeedback] = useState<string | null>(null)
+  const [showHelp, setShowHelp] = useState(() => {
+    try {
+      return localStorage.getItem(CONFLICT_HELP_KEY) !== '1'
+    } catch {
+      return true
+    }
+  })
+
+  function dismissHelp(forever: boolean) {
+    if (forever) {
+      try {
+        localStorage.setItem(CONFLICT_HELP_KEY, '1')
+      } catch {
+        /* ignore storage errors */
+      }
+    }
+    setShowHelp(false)
+  }
 
   const { conflicts, suggestions } = useMemo(() => {
     if (!training || !draft) return { conflicts: [] as ScheduleConflict[], suggestions: [] as ReschedulingSuggestion[] }
@@ -93,6 +115,57 @@ export function ConflictCenterPage() {
 
   return (
     <div>
+      {showHelp ? (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-ink/25 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => dismissHelp(false)}
+        >
+          <div
+            className="relative w-full max-w-lg rounded-2xl border border-line bg-panel-solid p-6 shadow-pop"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => dismissHelp(false)}
+              aria-label={buttons.close}
+              className="focus-ring absolute end-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-neutral-block hover:text-ink"
+            >
+              <Icon name="close" size={18} />
+            </button>
+            <h2 className="pe-8 text-[20px] font-semibold text-ink">{conflictCopy.helpTitle}</h2>
+            <p className="mt-2 text-[14px] leading-relaxed text-ink-muted">{conflictCopy.helpIntro}</p>
+            <div className="mt-4 space-y-2.5">
+              {[
+                { tone: 'danger' as const, title: conflictCopy.helpBlockingTitle, text: conflictCopy.helpBlocking },
+                { tone: 'warning' as const, title: conflictCopy.helpWarningTitle, text: conflictCopy.helpWarning },
+                { tone: 'neutral' as const, title: conflictCopy.helpInfoTitle, text: conflictCopy.helpInfo }
+              ].map((row) => (
+                <div key={row.title} className="flex items-start gap-3 rounded-xl border border-line bg-background/50 p-3">
+                  <span className="shrink-0">
+                    <Badge tone={row.tone}>{row.title}</Badge>
+                  </span>
+                  <p className="text-[14px] leading-relaxed text-ink">{row.text}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => dismissHelp(true)}
+                className="focus-ring rounded-lg px-2 py-1 text-[14px] font-medium text-ink-muted underline-offset-4 transition-colors hover:text-ink hover:underline"
+              >
+                {conflictCopy.helpDontShow}
+              </button>
+              <Button variant="primary" onClick={() => dismissHelp(false)}>
+                {conflictCopy.helpGotIt}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <PageHeader
         title={nav.conflictCenter}
         subtitle={training.name}

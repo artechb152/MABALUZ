@@ -6,7 +6,20 @@ export const conflictCopy = {
   applyFailed: 'לא נמצא חלון פנוי — נדרש שיבוץ ידני.',
   removeConfirm: (title: string) => `להסיר את "${title}" מהטיוטה?`,
   availableInBuilder: 'זמין דרך בניית הלו״ז.',
-  openBuilder: 'לבניית הלו״ז'
+  openBuilder: 'לבניית הלו״ז',
+  // First-visit explainer popup.
+  helpTitle: 'איך לקרוא את מרכז הקונפליקטים',
+  helpIntro: 'המסך מרכז את ההתנגשויות בטיוטת הלו״ז ומדרג אותן לפי חומרה:',
+  helpBlockingTitle: 'חוסם',
+  helpBlocking:
+    'התנגשות בין שני רכיבים קשיחים — למשל לו״ז משותף, יום שיא או הרצאת חוץ. חוסם מונע פרסום עד שהוא נפתר.',
+  helpWarningTitle: 'אזהרה',
+  helpWarning:
+    'רכיב גמיש שחופף לרכיב קשיח, או חריגה משעות הפעילות. ניתן לפרסם, אך מומלץ לטפל לפני הפרסום.',
+  helpInfoTitle: 'מידע',
+  helpInfo: 'הערה שאינה חוסמת — למשל פרט חסר אצל מרצה חוץ.',
+  helpGotIt: 'הבנתי',
+  helpDontShow: 'אל תציג שוב'
 } as const
 
 export const versionsCopy = {

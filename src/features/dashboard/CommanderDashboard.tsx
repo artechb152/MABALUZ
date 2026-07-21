@@ -24,6 +24,9 @@ import { dashCopy } from './copy'
 // hover, indigo when pressed). Reused so those buttons stay pixel-identical.
 const chromeButtonClass =
   'focus-ring rounded-xl border border-line bg-panel-solid px-4 py-2 text-[15px] font-medium text-ink-muted shadow-sm transition-colors hover:bg-neutral-block hover:text-ink active:bg-primary-soft active:text-primary-hover'
+// Same chrome design, sized to sit inside a card / card header.
+const chromeButtonSm =
+  'focus-ring rounded-xl border border-line bg-panel-solid px-3.5 py-1.5 text-[14px] font-medium text-ink-muted shadow-sm transition-colors hover:bg-neutral-block hover:text-ink active:bg-primary-soft active:text-primary-hover'
 
 export function CommanderDashboard() {
   const navigate = useNavigate()
@@ -150,16 +153,12 @@ export function CommanderDashboard() {
             count={pendingRequests.length}
             action={
               pendingRequests.length > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => navigate('/confirmations')}
-                  className="focus-ring rounded-lg px-2.5 py-1 text-[13px] font-medium text-ink-muted transition-colors hover:bg-neutral-block hover:text-ink"
-                >
+                <button type="button" onClick={() => navigate('/confirmations')} className={chromeButtonSm}>
                   {dashCopy.allRequests}
                 </button>
               ) : null
             }
-            className="min-h-[224px] flex-1 p-5"
+            className="min-h-[252px] flex-1 p-5"
           >
             {pendingRequests.length === 0 ? (
               <Centered>
@@ -171,21 +170,20 @@ export function CommanderDashboard() {
                 renderItem={(r) => {
                   const from = trainings.find((t) => t.id === r.requestedByTrainingId)?.name ?? ''
                   return (
-                    <div className="mx-auto w-full max-w-md rounded-2xl border border-line/80 bg-panel-solid px-4 py-3 text-start">
-                      <p className="line-clamp-2 text-[15px] font-medium leading-snug text-ink">{r.description}</p>
-                      <div className="mt-2.5 flex items-center justify-between gap-2">
+                    <div className="mx-auto w-full max-w-md rounded-2xl border border-line/80 bg-panel-solid px-4 py-3.5 text-start">
+                      <p className="line-clamp-2 text-[16px] font-medium leading-snug text-ink">{r.description}</p>
+                      <div className="mt-3 flex items-center justify-between gap-2">
                         {from ? (
-                          <span className="truncate text-[12px] text-ink-muted">{from}</span>
+                          <span className="truncate text-[13px] text-ink-muted">{from}</span>
                         ) : (
                           <span />
                         )}
                         <button
                           type="button"
                           onClick={() => navigate(`/confirmations/${r.id}`)}
-                          className="focus-ring inline-flex shrink-0 items-center gap-0.5 rounded-lg border border-primary/30 bg-primary-soft px-2.5 py-1 text-[12px] font-semibold text-primary-hover transition-colors hover:bg-primary-soft/70"
+                          className={clsx(chromeButtonSm, 'shrink-0')}
                         >
                           {dashCopy.reviewRequest}
-                          <Icon name="chevron-down" size={13} className="rotate-90" />
                         </button>
                       </div>
                     </div>
@@ -196,7 +194,7 @@ export function CommanderDashboard() {
           </DashCard>
 
           {/* Open conflicts (swipe deck) + draft-status inset panel. */}
-          <div className="card-tex flex min-h-[216px] flex-[1.5] flex-col p-5">
+          <div className="card-tex flex min-h-[252px] flex-1 flex-col p-5">
             <div className="mb-3 flex shrink-0 items-start justify-between gap-2">
               <div className="flex items-center gap-2.5">
                 <CountPill count={conflicts.length} />
@@ -215,10 +213,19 @@ export function CommanderDashboard() {
                   <SwipeDeck
                     items={conflicts}
                     renderItem={(c) => (
-                      <div className="mx-auto w-full max-w-md rounded-2xl border border-line/80 bg-panel-solid px-4 py-3">
-                        <p className="mb-1.5 text-[16px] font-medium text-ink">{c.title}</p>
+                      <div
+                        className={clsx(
+                          'mx-auto w-full max-w-md rounded-2xl border-2 bg-panel-solid px-4 py-3.5',
+                          c.severity === 'BLOCKING'
+                            ? 'border-danger/45'
+                            : c.severity === 'WARNING'
+                              ? 'border-warning/45'
+                              : 'border-line/80'
+                        )}
+                      >
+                        <p className="mb-1.5 text-[17px] font-medium text-ink">{c.title}</p>
                         {c.description ? (
-                          <p className="line-clamp-2 text-[13px] leading-relaxed text-ink-muted">{c.description}</p>
+                          <p className="line-clamp-2 text-[14px] leading-relaxed text-ink-muted">{c.description}</p>
                         ) : null}
                       </div>
                     )}
@@ -231,7 +238,7 @@ export function CommanderDashboard() {
                   red/orange chips. */}
               <div
                 className={clsx(
-                  'flex flex-1 flex-col items-center justify-center gap-4 rounded-2xl border p-5 text-center transition-colors',
+                  'flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border p-4 text-center transition-colors',
                   DRAFT_STATE[draftState].panel
                 )}
               >
@@ -239,7 +246,7 @@ export function CommanderDashboard() {
                   {dashCopy.draftStatusTitle}
                 </span>
                 {blocking > 0 || warning > 0 ? (
-                  <div className="flex w-full max-w-[190px] flex-col gap-2">
+                  <div className="flex flex-wrap justify-center gap-1.5">
                     {blocking > 0 ? <StatTag tone="danger" n={blocking} label={dashCopy.conflictsBlocking} /> : null}
                     {warning > 0 ? <StatTag tone="warning" n={warning} label={dashCopy.conflictsWarning} /> : null}
                   </div>
@@ -262,7 +269,7 @@ export function CommanderDashboard() {
             title={dashCopy.closestLectures}
             info={dashCopy.infoLectures}
             count={lectures.length}
-            className="min-h-[226px] flex-1 p-5"
+            className="min-h-[252px] flex-1 p-5"
           >
             {lectures.length === 0 ? (
               <Centered>
@@ -279,24 +286,24 @@ export function CommanderDashboard() {
                     : (e.instructorName ?? '')
                   return (
                     // Thin bordered card, centred in the panel.
-                    <div className="mx-auto flex w-full max-w-sm items-center gap-4 rounded-2xl border border-line/80 bg-panel-solid p-3 text-start">
+                    <div className="mx-auto flex w-full max-w-sm items-center gap-4 rounded-2xl border border-line/80 bg-panel-solid p-3.5 text-start">
                       {/* Date block — grey/white, not indigo. */}
-                      <div className="flex w-[70px] shrink-0 flex-col items-center justify-center rounded-xl border border-line/70 bg-neutral-block py-2">
-                        <span className="tnum text-[30px] font-bold leading-none text-ink">
+                      <div className="flex w-[74px] shrink-0 flex-col items-center justify-center rounded-xl border border-line/70 bg-neutral-block py-2.5">
+                        <span className="tnum text-[32px] font-bold leading-none text-ink">
                           {Number.parseInt(e.date.slice(8, 10), 10)}
                         </span>
-                        <span className="mt-1 text-[13px] font-medium leading-none text-ink-muted">
+                        <span className="mt-1 text-[14px] font-medium leading-none text-ink-muted">
                           {hebrewMonths[Number.parseInt(e.date.slice(5, 7), 10) - 1]}
                         </span>
                       </div>
                       {/* Details — larger, filling the space. */}
-                      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-                        <p className="truncate text-[17px] font-semibold text-ink">{e.title}</p>
+                      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
+                        <p className="truncate text-[18px] font-semibold text-ink">{e.title}</p>
                         {subtitle ? (
-                          <p className="truncate text-[13px] text-ink-muted">{subtitle}</p>
+                          <p className="truncate text-[14px] text-ink-muted">{subtitle}</p>
                         ) : null}
                         <div className="mt-0.5 flex flex-wrap items-center gap-2">
-                          <span className="tnum text-[15px] font-semibold text-ink" dir="ltr">
+                          <span className="tnum text-[16px] font-semibold text-ink" dir="ltr">
                             {e.startTime}–{e.endTime}
                           </span>
                           {details ? <StatusChip status={details.confirmationStatus} /> : null}
@@ -401,17 +408,17 @@ function CountPill({ count }: { count: number }) {
   )
 }
 
-/** A labelled severity row for the draft-status block: "label ........ N". */
+/** A small severity tag for the draft-status block: "N label", border only. */
 function StatTag({ tone, n, label }: { tone: 'danger' | 'warning'; n: number; label: string }) {
   return (
     <span
       className={clsx(
-        'flex items-center justify-between gap-2 rounded-xl border bg-panel-solid px-3 py-1.5',
-        tone === 'danger' ? 'border-danger/40 text-danger' : 'border-warning/40 text-warning'
+        'tnum inline-flex items-center gap-1 rounded-lg border bg-panel-solid px-2.5 py-0.5 text-[12px] font-medium text-ink',
+        tone === 'danger' ? 'border-danger/60' : 'border-warning/60'
       )}
     >
-      <span className="text-[13px] font-medium">{label}</span>
-      <span className="tnum text-[16px] font-bold leading-none">{n}</span>
+      <span className="font-bold">{n}</span>
+      {label}
     </span>
   )
 }
@@ -595,7 +602,7 @@ function StatusChip({ status }: { status: LectureConfirmationStatus }) {
           ? 'bg-danger-soft text-danger'
           : 'bg-neutral-block text-ink-muted'
   return (
-    <span className={clsx('inline-block shrink-0 rounded-md px-2 py-0.5 text-[12px] font-medium', cls)}>
+    <span className={clsx('inline-block shrink-0 rounded-md px-2 py-0.5 text-[13px] font-medium', cls)}>
       {confirmationStatusLabels[status]}
     </span>
   )
